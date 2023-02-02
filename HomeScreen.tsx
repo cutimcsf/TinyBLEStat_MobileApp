@@ -5,7 +5,7 @@
  * @format
  */
 
-import React from 'react';
+import React, {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -23,63 +23,31 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 import {createDrawerNavigator} from '@react-navigation/drawer';
+import Section from './Section';
 
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
 
 export default function HomeScreen(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    flex: 1,
   };
 
   return (
     <View style={backgroundStyle}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{flexGrow: 1}}
         style={backgroundStyle}>
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
+          <Section title="Home Screen">
+            Scan for TinyBLEStat sensors here and allow users to enable/disable them. Each enabled sensor should
+            become a tab in the drawer navigator.
           </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+
         </View>
       </ScrollView>
     </View>
