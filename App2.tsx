@@ -5,23 +5,6 @@
  * @format
  */
 
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 import React, {useEffect} from 'react';
 import {PermissionsAndroid, Platform} from 'react-native';
 import {BLEProvider} from './BleContext';
@@ -33,13 +16,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import HomeScreen from './HomeScreen';
 import SettingsScreen from './SettingsScreen';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-
 function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   const Drawer = createDrawerNavigator();
 
   useEffect(() => {
@@ -63,42 +40,20 @@ function App(): JSX.Element {
     }
   });
 
-
-
   return (
     <BLEProvider>
       <SafeAreaProvider>
         <NavigationContainer>
           <Drawer.Navigator
-              screenOptions={{headerShown: true, headerLeft: () => <MenuIcon />}}
-              drawerContent={props => <MenuContent {...props}  />}>
+            screenOptions={{headerShown: true, headerLeft: () => <MenuIcon />}}
+            drawerContent={props => <MenuContent {...props} />}>
             <Drawer.Screen name="Home" component={HomeScreen} />
             <Drawer.Screen name="Settings" component={SettingsScreen} />
           </Drawer.Navigator>
         </NavigationContainer>
-        {/*<HomeScreen/>*/}
       </SafeAreaProvider>
     </BLEProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
