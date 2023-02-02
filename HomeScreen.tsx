@@ -5,26 +5,12 @@
  * @format
  */
 
-import React, {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import React from 'react';
+import {ScrollView, StyleSheet, useColorScheme, View} from 'react-native';
 import {
   Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
-import {createDrawerNavigator} from '@react-navigation/drawer';
 import Section from './Section';
-
 
 export default function HomeScreen(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -47,7 +33,6 @@ export default function HomeScreen(): JSX.Element {
             Scan for TinyBLEStat sensors here and allow users to enable/disable them. Each enabled sensor should
             become a tab in the drawer navigator.
           </Section>
-
         </View>
       </ScrollView>
     </View>

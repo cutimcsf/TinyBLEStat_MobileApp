@@ -6,23 +6,8 @@
  */
 
 import React from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-import {createDrawerNavigator} from '@react-navigation/drawer';
+import {ScrollView, StyleSheet, Text, useColorScheme, View} from 'react-native';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Section from './Section';
 
 export default function SettingsScreen(): JSX.Element {

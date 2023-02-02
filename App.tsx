@@ -5,37 +5,20 @@
  * @format
  */
 
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 import React, {useEffect} from 'react';
-import {PermissionsAndroid, Platform} from 'react-native';
-import {BLEProvider} from './BleContext';
+import {PermissionsAndroid, Platform, useColorScheme} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createDrawerNavigator} from '@react-navigation/drawer';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+
+import {BLEProvider} from './BleContext';
 import MenuIcon from './components/MenuIcon';
 import MenuContent from './components/MenuContent';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
 import HomeScreen from './HomeScreen';
 import SettingsScreen from './SettingsScreen';
 
 
 function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   const Drawer = createDrawerNavigator();
 
   useEffect(() => {
@@ -66,8 +49,8 @@ function App(): JSX.Element {
       <SafeAreaProvider>
         <NavigationContainer>
           <Drawer.Navigator
-              screenOptions={{headerShown: true, headerLeft: () => <MenuIcon />}}
-              drawerContent={props => <MenuContent {...props}  />}>
+            screenOptions={{headerShown: true, headerLeft: () => <MenuIcon />}}
+            drawerContent={props => <MenuContent {...props} />}>
             <Drawer.Screen name="Home" component={HomeScreen} />
             <Drawer.Screen name="Settings" component={SettingsScreen} />
           </Drawer.Navigator>
