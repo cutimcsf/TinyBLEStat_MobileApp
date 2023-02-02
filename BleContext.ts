@@ -19,6 +19,7 @@ import {BleError, BleManager} from 'react-native-ble-plx';
 import Buffer from 'buffer';
 
 import {AppState, LogBox} from 'react-native';
+import TinyBLEStatSensor from "./TinyBLEStatSensor";
 LogBox.ignoreLogs(['new NativeEventEmitter']);
 
 /*
@@ -28,8 +29,8 @@ LogBox.ignoreLogs(['new NativeEventEmitter']);
  */
 export const BLEContext = createContext({
   sensor: undefined,
+  allSensors: [],
   sensorData: [],
-  sensorData2: [],
 });
 
 /*
@@ -50,6 +51,7 @@ const blemanager = new BleManager();
 export const BLEProvider = ({children}) => {
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
+  const allSensors = useRef( new Array<TinyBLEStatSensor>() );
 
   /*
    * The discovered sensor object
@@ -90,7 +92,9 @@ export const BLEProvider = ({children}) => {
       if (error) {
         // Handle error (scanning will be stopped automatically)
         console.info('Unable to scan for devices ...');
-        console.log(error + " :: " + error.errorCode + " :: " + error.androidErrorCode);
+        console.log(
+          error + ' :: ' + error.errorCode + ' :: ' + error.androidErrorCode,
+        );
 
         return;
       }
@@ -297,7 +301,7 @@ export const BLEProvider = ({children}) => {
    */
   let emitCurrentValue = useCallback(() => {
     timeout(readSensorValue(), time.current)
-      .then((value1) => {
+      .then(value1 => {
         console.log('Read values: ' + value1);
         return value1;
       })
@@ -380,6 +384,7 @@ export const BLEProvider = ({children}) => {
    */
   const context = {
     sensor: sensor,
+    allSensors: allSensors,
     sensorData: sensorData,
   };
 

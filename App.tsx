@@ -2,7 +2,8 @@
  * Sample React Native App
  * https://github.com/facebook/react-native
  *
- * @format
+ * @author Timothy C. Sweeney-Fanelli
+ * @copyright 2023 Affects AI
  */
 
 import React, {useEffect} from 'react';
@@ -17,7 +18,6 @@ import MenuContent from './components/MenuContent';
 import HomeScreen from './HomeScreen';
 import SettingsScreen from './SettingsScreen';
 
-
 function App(): JSX.Element {
   const Drawer = createDrawerNavigator();
 
@@ -28,7 +28,6 @@ function App(): JSX.Element {
       console.log('Checking for ACCESS_FINE_LOCATION permissions');
       PermissionsAndroid.requestMultiple([
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
         // PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
@@ -41,8 +40,6 @@ function App(): JSX.Element {
       });
     }
   });
-
-
 
   return (
     <BLEProvider>
@@ -60,6 +57,5 @@ function App(): JSX.Element {
     </BLEProvider>
   );
 }
-
 
 export default App;
