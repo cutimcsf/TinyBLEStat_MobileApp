@@ -19,18 +19,21 @@ import {BleError, BleManager} from 'react-native-ble-plx';
 import Buffer from 'buffer';
 
 import {AppState, LogBox} from 'react-native';
+import TinyBLEStatSensor from './TinyBLEStatSensor';
 LogBox.ignoreLogs(['new NativeEventEmitter']);
+
+interface ContextData {
+  allSensors: Array<TinyBLEStatSensor> | undefined;
+}
 
 /*
  * This is the template for the context object ... it defines the fields and
  * default initial values that it contains. Actual values are passed to the provider
  * at the very end of this source in the BLEProvider's return method
  */
-export const BLEContext = createContext({
-  sensor: undefined,
-  sensorData: [],
-  sensorData2: [],
-});
+export const BLEContext = createContext<Partial<ContextData> | undefined>(
+  undefined,
+);
 
 /*
  * The BLEManager is provided by the react-native-ble-plx library, and is our
@@ -49,7 +52,7 @@ const blemanager = new BleManager();
  */
 export const BLEProvider = ({children}) => {
   const appState = useRef(AppState.currentState);
-  const [appStateVisible, setAppStateVisible] = useState(appState.current);
+  // const [appStateVisible, setAppStateVisible] = useState(appState.current);
 
   /*
    * The discovered sensor object
@@ -90,7 +93,9 @@ export const BLEProvider = ({children}) => {
       if (error) {
         // Handle error (scanning will be stopped automatically)
         console.info('Unable to scan for devices ...');
-        console.log(error + " :: " + error.errorCode + " :: " + error.androidErrorCode);
+        console.log(
+          error + ' :: ' + error.errorCode + ' :: ' + error.androidErrorCode,
+        );
 
         return;
       }
@@ -297,7 +302,7 @@ export const BLEProvider = ({children}) => {
    */
   let emitCurrentValue = useCallback(() => {
     timeout(readSensorValue(), time.current)
-      .then((value1) => {
+      .then(value1 => {
         console.log('Read values: ' + value1);
         return value1;
       })
@@ -345,7 +350,7 @@ export const BLEProvider = ({children}) => {
       }
 
       appState.current = nextAppState;
-      setAppStateVisible(appState.current);
+      // setAppStateVisible(appState.current);
     });
 
     return () => {
@@ -379,8 +384,7 @@ export const BLEProvider = ({children}) => {
    * This is the actual object we'll provide as the context to nested elements.
    */
   const context = {
-    sensor: sensor,
-    sensorData: sensorData,
+    allSensors: undefined,
   };
 
   /*
