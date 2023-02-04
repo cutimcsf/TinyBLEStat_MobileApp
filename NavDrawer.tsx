@@ -8,7 +8,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import MenuIcon from './components/MenuIcon';
 import MenuContent from './components/MenuContent';
 import HomeScreen from './HomeScreen';
-import SettingsScreen from './SettingsScreen';
+import SensorScreen from './SensorScreen';
 
 function NavDrawer(): JSX.Element {
   const context = useContext(BLEContext);
@@ -28,7 +28,7 @@ function NavDrawer(): JSX.Element {
         .map(s => (
           <Drawer.Screen
             name={'Sensor: ' + s.displayName}
-            component={SettingsScreen}
+            component={SensorScreen}
             initialParams={{sensor: s}}
           />
         ))}

@@ -16,7 +16,7 @@ import NavDrawer from './NavDrawer';
 import MenuIcon from './components/MenuIcon';
 import MenuContent from './components/MenuContent';
 import HomeScreen from './HomeScreen';
-import SettingsScreen from './SettingsScreen';
+import SensorScreen from './SensorScreen';
 import {Provider as PaperProvider} from 'react-native-paper';
 
 function App(): JSX.Element {

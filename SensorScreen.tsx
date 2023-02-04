@@ -10,7 +10,7 @@ import {ScrollView, StyleSheet, Text, useColorScheme, View} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Section from './Section';
 
-export default function SettingsScreen({route, navigation}): JSX.Element {
+export default function SensorScreen({route, navigation}): JSX.Element {
   const isDarkMode = false; //useColorScheme() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
