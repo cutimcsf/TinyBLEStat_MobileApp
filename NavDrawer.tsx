@@ -27,6 +27,7 @@ function NavDrawer(): JSX.Element {
         .sort((a, b) => a.displayName.localeCompare(b.displayName))
         .map(s => (
           <Drawer.Screen
+            key={'drawer_key_' + s.deviceId}
             name={'Sensor: ' + s.displayName}
             component={SensorScreen}
             initialParams={{sensor: s}}

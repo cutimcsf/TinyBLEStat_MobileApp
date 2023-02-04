@@ -2,25 +2,18 @@ import {Device, DeviceId} from 'react-native-ble-plx';
 
 class TinyBLEStatSensor {
   readonly deviceId: DeviceId;
-  enabled: boolean;
-  protected _displayName: string = '';
+
+  displayName: string | undefined = undefined;
+  enabled: boolean = false;
+  sensorData: Array<number> = [0];
+  red: number = 255;
+  green: number = 255;
+  blue: number = 255;
 
   constructor(deviceId: DeviceId, name?: string) {
     this.deviceId = deviceId;
-    this._displayName = name;
     this.enabled = false;
-  }
-
-  set displayName(newName: string) {
-    if (!newName) {
-      throw new Error('displayName can not be empty.');
-    }
-
-    this.displayName = newName;
-  }
-
-  get displayName() {
-    return this._displayName;
+    this.displayName = name;
   }
 }
 

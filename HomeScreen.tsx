@@ -46,31 +46,29 @@ export default function HomeScreen(): JSX.Element {
 
   return (
     <ScrollView>
-      <Box sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}>
-        <Section title="Home Screen">
-          Scan for TinyBLEStat sensors here and allow users to enable/disable
-          them. Each enabled sensor should become a tab in the drawer navigator.
-        </Section>
-        <List.Section>
-          {context.allSensors.map((sensor: TinyBLEStatSensor) => (
-            <List.Item
-              style={styles.sectionContainer}
-              titleStyle={styles.listItemTitle}
-              key={'tinyBLEState_' + sensor.deviceId}
-              title={sensor.displayName}
-              onPress={event => {
-                handleToggle(sensor);
-              }}
-              left={props => (
-                <Checkbox.Item
-                  status={sensor.enabled ? 'checked' : 'unchecked'}
-                />
-              )}
-              right={props => <List.Icon {...props} icon="bluetooth" />}
-            />
-          ))}
-        </List.Section>
-      </Box>
+      <Section title="Home Screen">
+        Scan for TinyBLEStat sensors here and allow users to enable/disable
+        them. Each enabled sensor should become a tab in the drawer navigator.
+      </Section>
+      <List.Section>
+        {context.allSensors.map((sensor: TinyBLEStatSensor) => (
+          <List.Item
+            style={styles.sectionContainer}
+            titleStyle={styles.listItemTitle}
+            key={'tinyBLEState_' + sensor.deviceId}
+            title={sensor.displayName}
+            onPress={event => {
+              handleToggle(sensor);
+            }}
+            left={props => (
+              <Checkbox.Item
+                status={sensor.enabled ? 'checked' : 'unchecked'}
+              />
+            )}
+            right={props => <List.Icon {...props} icon="bluetooth" />}
+          />
+        ))}
+      </List.Section>
     </ScrollView>
   );
 }

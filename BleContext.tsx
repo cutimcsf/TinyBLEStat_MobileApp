@@ -44,7 +44,7 @@ export const BLEContext = createContext<ContextData | undefined>(undefined);
  * instantiating multiple times. I am almost certain this could be safely moved inside
  * the BLEProvider using the 'useRef' hook -- but I haven't tried that yet.
  */
-const blemanager = new BleManager();
+export const blemanager = new BleManager();
 
 /*
  * This is the context provider ... It is the top-level element used by App.js
@@ -62,13 +62,6 @@ export const BLEProvider = ({children}) => {
     new TinyBLEStatSensor('Device1', 'Device1'),
     new TinyBLEStatSensor('Device2', 'Device2'),
     new TinyBLEStatSensor('Device3', 'Device3'),
-    new TinyBLEStatSensor('Device4', 'Device4'),
-    new TinyBLEStatSensor('Device5', 'Device5'),
-    new TinyBLEStatSensor('Device6', 'Device6'),
-    new TinyBLEStatSensor('Device7', 'Device7'),
-    new TinyBLEStatSensor('Device8', 'Device8'),
-    new TinyBLEStatSensor('Device9', 'Device9'),
-    new TinyBLEStatSensor('Device10', 'Device10'),
   ]);
 
   /*
@@ -370,6 +363,12 @@ export const BLEProvider = ({children}) => {
 
       appState.current = nextAppState;
       // setAppStateVisible(appState.current);
+    });
+
+    allSensors.forEach(s => {
+      s.red = Math.random() * 255;
+      s.green = Math.random() * 255;
+      s.blue = Math.random() * 255;
     });
 
     return () => {
