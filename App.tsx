@@ -12,11 +12,12 @@ import {createDrawerNavigator} from '@react-navigation/drawer';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import {BLEProvider} from './BleContext';
+import NavDrawer from './NavDrawer';
 import MenuIcon from './components/MenuIcon';
 import MenuContent from './components/MenuContent';
 import HomeScreen from './HomeScreen';
 import SettingsScreen from './SettingsScreen';
-
+import {Provider as PaperProvider} from 'react-native-paper';
 
 function App(): JSX.Element {
   const Drawer = createDrawerNavigator();
@@ -42,24 +43,18 @@ function App(): JSX.Element {
     }
   });
 
-
-
   return (
-    <BLEProvider>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <Drawer.Navigator
-            screenOptions={{headerShown: true, headerLeft: () => <MenuIcon />}}
-            drawerContent={props => <MenuContent {...props} />}>
-            <Drawer.Screen name="Home" component={HomeScreen} />
-            <Drawer.Screen name="Settings" component={SettingsScreen} />
-          </Drawer.Navigator>
-        </NavigationContainer>
-        {/*<HomeScreen/>*/}
-      </SafeAreaProvider>
-    </BLEProvider>
+    <PaperProvider>
+      <BLEProvider>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <NavDrawer />
+          </NavigationContainer>
+          {/*<HomeScreen/>*/}
+        </SafeAreaProvider>
+      </BLEProvider>
+    </PaperProvider>
   );
 }
-
 
 export default App;

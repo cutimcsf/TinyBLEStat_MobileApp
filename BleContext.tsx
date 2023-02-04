@@ -23,7 +23,9 @@ import TinyBLEStatSensor from './TinyBLEStatSensor';
 LogBox.ignoreLogs(['new NativeEventEmitter']);
 
 interface ContextData {
-  allSensors: Array<TinyBLEStatSensor> | undefined;
+  allSensors: Array<TinyBLEStatSensor>;
+  setAllSensors: () => {};
+  updateSensorInState: () => {};
 }
 
 /*
@@ -31,9 +33,7 @@ interface ContextData {
  * default initial values that it contains. Actual values are passed to the provider
  * at the very end of this source in the BLEProvider's return method
  */
-export const BLEContext = createContext<Partial<ContextData> | undefined>(
-  undefined,
-);
+export const BLEContext = createContext<ContextData | undefined>(undefined);
 
 /*
  * The BLEManager is provided by the react-native-ble-plx library, and is our
@@ -58,12 +58,23 @@ export const BLEProvider = ({children}) => {
    * The discovered sensor object
    */
   let [sensor, setSensor] = useState(undefined);
+  let [allSensors, setAllSensors] = useState([
+    new TinyBLEStatSensor('Device1', 'Device1'),
+    new TinyBLEStatSensor('Device2', 'Device2'),
+    new TinyBLEStatSensor('Device3', 'Device3'),
+    new TinyBLEStatSensor('Device4', 'Device4'),
+    new TinyBLEStatSensor('Device5', 'Device5'),
+    new TinyBLEStatSensor('Device6', 'Device6'),
+    new TinyBLEStatSensor('Device7', 'Device7'),
+    new TinyBLEStatSensor('Device8', 'Device8'),
+    new TinyBLEStatSensor('Device9', 'Device9'),
+    new TinyBLEStatSensor('Device10', 'Device10'),
+  ]);
 
   /*
    * The list of values obtained from the sensor (to be rendered by the line graph in chart.js)
    */
   const [sensorData, setSensorData] = useState([0]);
-  const [sensorData2, setSensorData2] = useState([0]);
 
   /*
    * The service and characteristic UUIDs for the Clarkson Insole demo device's "readCounter"
@@ -165,6 +176,14 @@ export const BLEProvider = ({children}) => {
       }
     });
   }, []);
+
+  let updateSensorInState = (sensor: TinyBLEStatSensor) => {
+    let newSensors = allSensors.filter(x => x.deviceId != sensor.deviceId);
+    newSensors.push(sensor);
+    newSensors.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+    setAllSensors(newSensors);
+  };
 
   let appendDataPoint = useCallback(
     value => {
@@ -384,7 +403,9 @@ export const BLEProvider = ({children}) => {
    * This is the actual object we'll provide as the context to nested elements.
    */
   const context = {
-    allSensors: undefined,
+    allSensors: allSensors,
+    setAllSensors: setAllSensors,
+    updateSensorInState: updateSensorInState,
   };
 
   /*

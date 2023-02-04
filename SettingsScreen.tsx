@@ -10,8 +10,8 @@ import {ScrollView, StyleSheet, Text, useColorScheme, View} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Section from './Section';
 
-export default function SettingsScreen(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+export default function SettingsScreen({route, navigation}): JSX.Element {
+  const isDarkMode = false; //useColorScheme() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
     flex: 1,
@@ -27,9 +27,9 @@ export default function SettingsScreen(): JSX.Element {
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
           }}>
-          <Section title="Settings Screen">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
+          <Section title={route.params.sensor.displayName}>
+            Plot {route.params.sensor.displayName} data and display settings
+            here...
           </Section>
         </View>
       </ScrollView>
