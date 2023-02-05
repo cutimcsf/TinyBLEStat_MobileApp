@@ -23,31 +23,77 @@ export default function SensorScreen({route, props}): JSX.Element {
    * timeout handle for the read value loop...
    */
   const dataRefreshHandle = useRef<number | undefined>(undefined);
-
-  /**
-   * Which sensor is active -- LMP91000_1 (0) or LMP91000_2 (1)?
-   */
-  const [activeAFESensor, setActiveAFESensor] = useState<number>(0);
-
   const [showBiasDropdown, setShowBiasDropdown] = useState<boolean>(false);
   const [showIntZDropdown, setShowIntZDropdown] = useState<boolean>(false);
   const [showRTIADropdown, setShowRTIADropdown] = useState<boolean>(false);
   const [showRLOADDropdown, setShowRLOADDropdown] = useState<boolean>(false);
   const [showOpModeDropdown, setShowOpModeDropdown] = useState<boolean>(false);
 
-  const [vRefValue, setVRefValue] = useState<Array<string>>([
-    'external',
-    'external',
-  ]);
-  const [biasValue, setBiasValue] = useState<Array<number>>([0, 0]);
-  const [intZValue, setIntZValue] = useState<Array<number>>([1, 1]);
-  const [rLoadValue, setRLoadValue] = useState<Array<number>>([3, 3]);
-  const [rGainValue, setRGainValue] = useState<Array<number>>([0, 0]);
-  const [shortingFETEnabled, setShortingFETEnabled] = useState<Array<boolean>>([
-    false,
-    false,
-  ]);
-  const [operatingMode, setOperatingMode] = useState<Array<number>>([0, 0]);
+  const setActiveAFE = useCallback(
+    (value: string) => {
+      sensor.activeAfe = parseInt(value);
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setVRefValue = useCallback(
+    (value: string) => {
+      sensor.referenceVoltageSource = value;
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setBiasValue = useCallback(
+    (value: number) => {
+      sensor.bias = value;
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setIntZValue = useCallback(
+    (value: number) => {
+      sensor.internalZero = value;
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setRLoadValue = useCallback(
+    (value: number) => {
+      sensor.rLoad = value;
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setRGainValue = useCallback(
+    (value: number) => {
+      sensor.rGain = value;
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setShortingFETEnabled = useCallback(
+    (value: string) => {
+      let val = value === 'true';
+      console.log('Setting FET ' + val);
+      sensor.shortingFET = val;
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setOperatingMode = useCallback(
+    (value: number) => {
+      sensor.operatingMode = value;
+      setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
 
   const isDarkMode = false; //useColorScheme() === 'dark';
   const backgroundStyle = {
@@ -77,7 +123,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   let time = useRef(200);
 
   let appendDataPoint = useCallback(
-    value => {
+    (value: number | undefined) => {
       if (value === undefined) {
         return;
       }
@@ -92,12 +138,15 @@ export default function SensorScreen({route, props}): JSX.Element {
         new1Data.shift();
       }
 
-      // Update the sensorData state object ... this sets off a chain reaction
-      // documented in the 'useEffect' hooks written below.
-      setSensor({
-        ...sensor,
-        sensorData: new1Data,
-      });
+      sensor.sensorData = new1Data;
+      setSensor(sensor.cloneSensor());
+
+      // // Update the sensorData state object ... this sets off a chain reaction
+      // // documented in the 'useEffect' hooks written below.
+      // setSensor({
+      //   ...sensor,
+      //   sensorData: new1Data,
+      // });
     },
     [sensor],
   );
@@ -301,6 +350,7 @@ export default function SensorScreen({route, props}): JSX.Element {
           }}>
           <LineChart
             data={{
+              labels: [],
               datasets: [
                 {
                   data: sensor.sensorData,
@@ -350,11 +400,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                       label: 'LMP91000_2',
                     },
                   ]}
-                  value={activeAFESensor.toString()}
-                  onValueChange={value => {
-                    console.log('Setting active LMP91000 Sensor: ' + value);
-                    setActiveAFESensor(parseInt(value));
-                  }}
+                  value={String(sensor.activeAfe)}
+                  onValueChange={setActiveAFE}
                 />
               </Row>
               <Row inline />
@@ -375,13 +422,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                       {value: 'true', label: 'On'},
                       {value: 'false', label: 'Off'},
                     ]}
-                    value={shortingFETEnabled[activeAFESensor].toString()}
-                    onValueChange={value => {
-                      let newValues = [...shortingFETEnabled];
-                      newValues[activeAFESensor] = value === 'true';
-                      setShortingFETEnabled(newValues);
-                      console.log('Setting FET Short to: ' + newValues);
-                    }}
+                    value={String(sensor.shortingFET)}
+                    onValueChange={setShortingFETEnabled}
                   />
                 </Col>
               </Row>
@@ -395,13 +437,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                     mode={'outlined'}
                     onDismiss={() => setShowOpModeDropdown(false)}
                     showDropDown={() => setShowOpModeDropdown(true)}
-                    value={operatingMode[activeAFESensor].toString()}
-                    setValue={value => {
-                      let newValues = [...operatingMode];
-                      newValues[activeAFESensor] = value;
-                      console.log('setting new bias values: ' + newValues);
-                      setOperatingMode(newValues);
-                    }}
+                    value={'' + sensor.operatingMode}
+                    setValue={setOperatingMode}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
                     list={operatingModeValues}
@@ -428,15 +465,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                       },
                       {value: 'external', label: 'Vref'},
                     ]}
-                    value={vRefValue[activeAFESensor]}
-                    onValueChange={value => {
-                      let newValues = [...vRefValue];
-                      newValues[activeAFESensor] = value;
-                      setVRefValue(newValues);
-                      console.log(
-                        'Setting voltage references to: ' + newValues,
-                      );
-                    }}
+                    value={sensor.referenceVoltageSource}
+                    onValueChange={setVRefValue}
                   />
                 </Col>
               </Row>
@@ -450,13 +480,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                     mode={'outlined'}
                     onDismiss={() => setShowBiasDropdown(false)}
                     showDropDown={() => setShowBiasDropdown(true)}
-                    value={biasValue[activeAFESensor].toString()}
-                    setValue={value => {
-                      let newBias = [...biasValue];
-                      newBias[activeAFESensor] = value;
-                      console.log('setting new bias values: ' + newBias);
-                      setBiasValue(newBias);
-                    }}
+                    value={String(sensor.bias)}
+                    setValue={setBiasValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
                     list={biasValueOptions.sort((a, b) => {
@@ -475,13 +500,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                     mode={'outlined'}
                     onDismiss={() => setShowIntZDropdown(false)}
                     showDropDown={() => setShowIntZDropdown(true)}
-                    value={intZValue[activeAFESensor].toString()}
-                    setValue={value => {
-                      let newIntZValues = [...intZValue];
-                      newIntZValues[activeAFESensor] = value;
-                      console.log('setting new intz values: ' + newIntZValues);
-                      setIntZValue(newIntZValues);
-                    }}
+                    value={String(sensor.internalZero)}
+                    setValue={setIntZValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
                     list={intZValueOptions}
@@ -505,13 +525,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                     mode={'outlined'}
                     onDismiss={() => setShowRTIADropdown(false)}
                     showDropDown={() => setShowRTIADropdown(true)}
-                    value={rGainValue[activeAFESensor].toString()}
-                    setValue={value => {
-                      let newValues = [...rGainValue];
-                      newValues[activeAFESensor] = value;
-                      console.log('setting new rgain values: ' + newValues);
-                      setRGainValue(newValues);
-                    }}
+                    value={String(sensor.rGain)}
+                    setValue={setRGainValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
                     list={rTIAValueOptions}
@@ -530,13 +545,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                     mode={'outlined'}
                     onDismiss={() => setShowRLOADDropdown(false)}
                     showDropDown={() => setShowRLOADDropdown(true)}
-                    value={rLoadValue[activeAFESensor].toString()}
-                    setValue={value => {
-                      let newValues = [...rLoadValue];
-                      newValues[activeAFESensor] = value;
-                      console.log('setting new rload values: ' + newValues);
-                      setRLoadValue(newValues);
-                    }}
+                    value={sensor.rLoad}
+                    setValue={setRLoadValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
                     list={rLOADValueOptions}

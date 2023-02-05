@@ -65,7 +65,7 @@ export const BLEProvider = ({children}) => {
    */
   let [sensor, setSensor] = useState(undefined);
   let [allSensors, setAllSensors] = useState([
-    // new TinyBLEStatSensor('Device1', 'Dummy Device 1'),
+    new TinyBLEStatSensor('Device1', 'Dummy Device 1'),
     // new TinyBLEStatSensor('Device2', 'Dummy Device 2'),
     // new TinyBLEStatSensor('Device3', 'Dummy Device 3'),
   ]);
