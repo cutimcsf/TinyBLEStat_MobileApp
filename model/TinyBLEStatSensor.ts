@@ -6,7 +6,6 @@ class TinyBLEStatSensor {
   displayName: string | undefined = undefined;
 
   enabled: boolean = false;
-  sensorData: Array<number> = [0];
   dummySensor: boolean = false;
   red: number = 255;
   green: number = 255;
@@ -20,6 +19,8 @@ class TinyBLEStatSensor {
   private _rGainValue: Array<number> = [0, 0];
   private _shortingFETEnabled: Array<boolean> = [false, false];
   private _operatingMode: Array<number> = [0, 0];
+  private _sensorData1: Array<number> = [0];
+  private _sensorData2: Array<number> = [0];
 
   constructor(deviceId: DeviceId, name?: string) {
     this.deviceId = deviceId;
@@ -92,6 +93,27 @@ class TinyBLEStatSensor {
     this._shortingFETEnabled[this._activeAfe] = value;
   }
 
+  public getSensorData(afe: number): Array<number> {
+    // console.log('getting data for afe ' + afe);
+    switch (afe) {
+      case 0:
+        return this._sensorData1;
+
+      case 1:
+        return this._sensorData2;
+    }
+  }
+
+  public setSensorData(afe: number, value: Array<number>) {
+    switch (afe) {
+      case 0:
+        this._sensorData1 = [...value];
+
+      case 1:
+        this._sensorData2 = [...value];
+    }
+  }
+
   public cloneSensor(): TinyBLEStatSensor {
     let x = new TinyBLEStatSensor(this.deviceId, this.displayName);
 
@@ -109,8 +131,8 @@ class TinyBLEStatSensor {
     x._rGainValue = [...this._rGainValue];
     x._shortingFETEnabled = [...this._shortingFETEnabled];
     x._operatingMode = [...this._operatingMode];
-    x.sensorData = [...this.sensorData];
-
+    x._sensorData1 = [...this._sensorData1];
+    x._sensorData2 = [...this._sensorData2];
     return x;
   }
 }

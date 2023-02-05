@@ -72,11 +72,6 @@ export const BLEProvider = ({children}) => {
   let [btState, setBTState] = useState(State.Unknown);
 
   /*
-   * The list of values obtained from the sensor (to be rendered by the line graph in chart.js)
-   */
-  const [sensorData, setSensorData] = useState([0]);
-
-  /*
    * The service and characteristic UUIDs for the Clarkson Insole demo device's "readCounter"
    * method.
    */
@@ -161,95 +156,6 @@ export const BLEProvider = ({children}) => {
     };
   }, [allSensors, onDiscoverDevice]);
 
-  let appendDataPoint = useCallback(
-    (value: number) => {
-      // Straight-lines don't make good demos -- let's record
-      // the sin(value/2) instead.
-      let new1Data = [...sensorData, Math.sin(value / 2)];
-
-      // We only want to accumulate 25 datapoints, and then
-      // start rolling ...
-      if (new1Data.length > 25) {
-        new1Data.shift();
-      }
-
-      // Update the sensorData state object ... this sets off a chain reaction
-      // documented in the 'useEffect' hooks written below.
-      setSensorData(new1Data);
-    },
-    [sensorData],
-  );
-
-  // /**
-  //  * This method obtains the latest value from the sensor and appends it to the list
-  //  * stored in the sensorData state variable. It is a callback method dependent on the
-  //  * 'sensor' and 'sensorData' objects -- so if either of those two values are changed,
-  //  * this callback gets re-defined.
-  //  *
-  //  * This is critical, because if we don't redefine the method after a state change, then
-  //  * subsequent calls to it are using stale references to old values and the app will not
-  //  * behave the way we want it to.
-  //  *
-  //  * @type {(function(): Promise<number|number>)|*}
-  //  */
-  // let readSensorValue = useCallback(
-  //   async (sensor: TinyBLEStatSensor) => {
-  //     // Attempt to connect
-  //     console.log('Attempting to read sensor value.');
-  //     return bleManager
-  //       .readCharacteristicForDevice(
-  //         sensor.deviceId,
-  //         CU_FAB_SERVICE,
-  //         CU_FAB_COUNTER_CHARACTERISTIC,
-  //       )
-  //       .then(characteristic => {
-  //         console.log(
-  //           'Read sensor value from service {' +
-  //             characteristic.serviceUUID +
-  //             '} and characteristic {' +
-  //             characteristic.uuid +
-  //             '}.',
-  //         );
-  //
-  //         // Characteristic values are base-64 encoded buffers in the
-  //         // react-native-ble-plx API ... here we're decoding it as a
-  //         // single 8-bit integer, but I didn't actually cross-reference
-  //         // this against the device's firmware ... it's possible the device
-  //         // is returning a 16 or 32-bit integer value? In which case, we
-  //         // need to decode up to 4 bytes of data from this buffer ... keep
-  //         // in mind there will be an endian mismatch, so you'll need to flip
-  //         // the bytes around and so some bit-shifting if needed.
-  //         console.log(
-  //           'Attempting to decode characteristic value as base64 encoded buffer.',
-  //         );
-  //         let base64value = characteristic.value;
-  //         if (base64value == null) {
-  //           base64value = '';
-  //         }
-  //
-  //         let buffer = new Buffer.Buffer(base64value, 'base64');
-  //
-  //         console.log('Buffer has length ' + buffer.length);
-  //         let value = Uint8Array.from(buffer)[0];
-  //
-  //         console.log(
-  //           'Decoded value ' + value + ' - appending to chart data array.',
-  //         );
-  //
-  //         appendDataPoint(value);
-  //
-  //         return value;
-  //       })
-  //       .catch(error => {
-  //         console.error('Unexpected error occurred reading sensor value.');
-  //         if (error instanceof BleError) {
-  //           console.error('[' + error.errorCode + '] ' + error.reason);
-  //         }
-  //       });
-  //   },
-  //   [appendDataPoint],
-  // );
-
   /*
    * A react component can respond to state changes using a 'useEffect' hook ... this
    * is a special-case of the useEffect hook which has no dependencies (deps: is an empty list)...
@@ -296,6 +202,7 @@ export const BLEProvider = ({children}) => {
     return () => {
       console.error('Unmounting context');
       subscription.remove();
+      bluetoothStateSubscription.remove();
     };
   }, []);
 

@@ -18,7 +18,7 @@ import DropDown from 'react-native-paper-dropdown';
 
 export default function SensorScreen({route, props}): JSX.Element {
   const [sensor, setSensor] = useState<TinyBLEStatSensor>(route.params.sensor);
-
+  const [enabled, setEnabled] = useState<boolean>(false);
   /**
    * timeout handle for the read value loop...
    */
@@ -106,10 +106,6 @@ export default function SensorScreen({route, props}): JSX.Element {
   const chartLeftMargin =
     (Dimensions.get('window').width * (1 - chartWidthPct)) / 2;
 
-  // useEffect(() => {
-  //   return () => {};
-  // }, []);
-
   /*
    * This is a quick helper which wraps an asynchronous 'thenable' method in a timeout
    */
@@ -123,30 +119,28 @@ export default function SensorScreen({route, props}): JSX.Element {
   let time = useRef(200);
 
   let appendDataPoint = useCallback(
-    (value: number | undefined) => {
+    (afe: number, value: number | undefined) => {
       if (value === undefined) {
         return;
       }
 
+      // console.log('Getting current data');
+      let data = sensor.getSensorData(afe);
+
+      console.log('Got ' + data.length + ' data points');
+
       // Straight-lines don't make good demos -- let's record
       // the sin(value/2) instead.
-      let new1Data = [...sensor.sensorData, Math.sin(value / 2)];
+      let newData = [...data, value];
 
       // We only want to accumulate 25 datapoints, and then
       // start rolling ...
-      if (new1Data.length > 25) {
-        new1Data.shift();
+      if (newData.length > 25) {
+        newData.shift();
       }
 
-      sensor.sensorData = new1Data;
+      sensor.setSensorData(afe, newData);
       setSensor(sensor.cloneSensor());
-
-      // // Update the sensorData state object ... this sets off a chain reaction
-      // // documented in the 'useEffect' hooks written below.
-      // setSensor({
-      //   ...sensor,
-      //   sensorData: new1Data,
-      // });
     },
     [sensor],
   );
@@ -231,7 +225,8 @@ export default function SensorScreen({route, props}): JSX.Element {
     let value: number | undefined;
 
     if (sensor.dummySensor) {
-      value = Math.random() * 50;
+      appendDataPoint(0, Math.random() * 50);
+      appendDataPoint(1, Math.random() * 50);
     } else {
       // // Attempt to connect
       // console.log('Attempting to read sensor value.');
@@ -306,7 +301,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       //     }
       //   });
     }
-    appendDataPoint(value);
+    // appendDataPoint(0, value);
   }, [appendDataPoint, sensor]);
 
   /*
@@ -327,7 +322,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   }, [sensor, readSensorValue]);
 
   useEffect(() => {
-    if (sensor) {
+    if (sensor && enabled) {
       if (dataRefreshHandle.current != undefined) {
         clearTimeout(dataRefreshHandle.current);
         dataRefreshHandle.current = undefined;
@@ -335,7 +330,7 @@ export default function SensorScreen({route, props}): JSX.Element {
 
       dataRefreshHandle.current = setTimeout(pollValue, time.current);
     }
-  }, [pollValue, sensor]);
+  }, [enabled, pollValue, sensor]);
 
   return (
     <View style={backgroundStyle}>
@@ -353,9 +348,14 @@ export default function SensorScreen({route, props}): JSX.Element {
               labels: [],
               datasets: [
                 {
-                  data: sensor.sensorData,
-                  color: (opacity = 1) =>
-                    `rgba(${sensor.red}, ${sensor.green}, ${sensor.blue}, ${opacity})`,
+                  key: 'AFE_1',
+                  data: sensor.getSensorData(0),
+                  color: (opacity = 1) => `rgba(255, 255, 0, ${opacity})`,
+                },
+                {
+                  key: 'AFE_2',
+                  data: sensor.getSensorData(1),
+                  color: (opacity = 1) => `rgba(0,0,255, ${opacity})`,
                 },
               ],
             }}
@@ -363,11 +363,11 @@ export default function SensorScreen({route, props}): JSX.Element {
             height={Dimensions.get('window').height * 0.25}
             // yAxisLabel="$"
             // yAxisSuffix="k"
-            yAxisInterval={1} // optional, defaults to 1
+            // yAxisInterval={1} // optional, defaults to 1
             chartConfig={{
-              backgroundColor: '#e26a00',
-              backgroundGradientFrom: '#fb8c00',
-              backgroundGradientTo: '#ffa726',
+              backgroundColor: '#3c3c3c',
+              backgroundGradientFrom: '#3c3c3c',
+              backgroundGradientTo: '#9f9f9f',
               decimalPlaces: 2, // optional, defaults to 2dp
               color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
               labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
@@ -386,16 +386,29 @@ export default function SensorScreen({route, props}): JSX.Element {
               borderRadius: 16,
             }}
           />
+          <SegmentedButtons
+            buttons={[
+              {value: 'true', label: 'On'},
+              {value: 'false', label: 'Off'},
+            ]}
+            value={String(enabled)}
+            onValueChange={value => {
+              console.log('Setting enabled: ' + value);
+              setEnabled(value === 'true');
+            }}
+          />
           <Section title={sensor.displayName + ' Configuration'}>
             <Grid>
               <Row inline>
                 <SegmentedButtons
                   buttons={[
                     {
+                      disabled: enabled,
                       value: '0',
                       label: 'LMP91000_1',
                     },
                     {
+                      disabled: enabled,
                       value: '1',
                       label: 'LMP91000_2',
                     },
@@ -419,8 +432,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                 <Col inline size={5}>
                   <SegmentedButtons
                     buttons={[
-                      {value: 'true', label: 'On'},
-                      {value: 'false', label: 'Off'},
+                      {value: 'true', label: 'On', disabled: enabled},
+                      {value: 'false', label: 'Off', disabled: enabled},
                     ]}
                     value={String(sensor.shortingFET)}
                     onValueChange={setShortingFETEnabled}
@@ -442,6 +455,7 @@ export default function SensorScreen({route, props}): JSX.Element {
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
                     list={operatingModeValues}
+                    inputProps={{disabled: enabled}}
                   />
                 </Col>
               </Row>
@@ -460,10 +474,11 @@ export default function SensorScreen({route, props}): JSX.Element {
                   <SegmentedButtons
                     buttons={[
                       {
+                        disabled: enabled,
                         value: 'internal',
                         label: 'Vdd',
                       },
-                      {value: 'external', label: 'Vref'},
+                      {value: 'external', label: 'Vref', disabled: enabled},
                     ]}
                     value={sensor.referenceVoltageSource}
                     onValueChange={setVRefValue}
@@ -484,6 +499,7 @@ export default function SensorScreen({route, props}): JSX.Element {
                     setValue={setBiasValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
+                    inputProps={{disabled: enabled}}
                     list={biasValueOptions.sort((a, b) => {
                       return parseInt(a.value) - parseInt(b.value);
                     })}
@@ -503,6 +519,7 @@ export default function SensorScreen({route, props}): JSX.Element {
                     value={String(sensor.internalZero)}
                     setValue={setIntZValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
+                    inputProps={{disabled: enabled}}
                     theme={DefaultTheme}
                     list={intZValueOptions}
                   />
@@ -529,6 +546,7 @@ export default function SensorScreen({route, props}): JSX.Element {
                     setValue={setRGainValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
+                    inputProps={{disabled: enabled}}
                     list={rTIAValueOptions}
                   />
                 </Col>
@@ -545,10 +563,11 @@ export default function SensorScreen({route, props}): JSX.Element {
                     mode={'outlined'}
                     onDismiss={() => setShowRLOADDropdown(false)}
                     showDropDown={() => setShowRLOADDropdown(true)}
-                    value={sensor.rLoad}
+                    value={String(sensor.rLoad)}
                     setValue={setRLoadValue}
                     dropDownItemTextStyle={styles.dropdownItemText}
                     theme={DefaultTheme}
+                    inputProps={{disabled: enabled}}
                     list={rLOADValueOptions}
                   />
                 </Col>
