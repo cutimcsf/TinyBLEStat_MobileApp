@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
     color: Colors.black,
     marginBottom: 20,
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   textSectionDescription: {
     marginTop: 8,

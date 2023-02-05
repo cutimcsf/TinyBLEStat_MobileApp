@@ -15,10 +15,12 @@ import {DefaultTheme, SegmentedButtons, Text} from 'react-native-paper';
 import {Grid, Row, Col} from 'react-native-paper-grid';
 import {styles} from '../Styles';
 import DropDown from 'react-native-paper-dropdown';
+import Slider from 'react-native-sliders';
 
 export default function SensorScreen({route, props}): JSX.Element {
   const [sensor, setSensor] = useState<TinyBLEStatSensor>(route.params.sensor);
   const [enabled, setEnabled] = useState<boolean>(false);
+  const [dacValue, setDacValue] = useState<number>(50);
   /**
    * timeout handle for the read value loop...
    */
@@ -397,197 +399,242 @@ export default function SensorScreen({route, props}): JSX.Element {
               setEnabled(value === 'true');
             }}
           />
-          <Section title={sensor.displayName + ' Configuration'}>
-            <Grid>
-              <Row inline>
+          <Grid>
+            <Row>
+              <Col size={10}>
+                <View style={styles.sectionContainer}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      {
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      },
+                    ]}>
+                    {sensor.displayName + ' Configuration'}
+                  </Text>
+                </View>
+              </Col>
+            </Row>
+            <Row inline>
+              <SegmentedButtons
+                buttons={[
+                  {
+                    disabled: enabled,
+                    value: '0',
+                    label: 'LMP91000_1',
+                  },
+                  {
+                    disabled: enabled,
+                    value: '1',
+                    label: 'LMP91000_2',
+                  },
+                ]}
+                value={String(sensor.activeAfe)}
+                onValueChange={setActiveAFE}
+              />
+            </Row>
+            <Row inline />
+            <Row>
+              <Col size={10}>
+                <Text style={styles.textSectionTitle}>Reference Voltage</Text>
+              </Col>
+            </Row>
+            <Row>
+              <Col size={10}>
+                <Slider
+                  value={dacValue}
+                  onValueChange={setDacValue}
+                  onSlidingComplete={() => {
+                    console.log(
+                      'Write this value to DAC: 0x' +
+                        parseInt(
+                          Number((255 * dacValue) / 100).toFixed(0),
+                        ).toString(16),
+                    );
+                  }}
+                  minimumValue={0}
+                  maximumValue={100}
+                  step={0.1}
+                />
+                <Text>Value: {Number(dacValue).toFixed(1)}%</Text>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Text>
+                  Sets Vref supplied to the LMP91000 AFEs as a percentage of
+                  Vdd.
+                </Text>
+              </Col>
+            </Row>
+            <Row inline />
+            <Row>
+              <Col size={10}>
+                <Text style={styles.textSectionTitle}>
+                  Operating Mode (MODECN)
+                </Text>
+              </Col>
+            </Row>
+            <Row>
+              <Col inline size={5}>
+                <Text style={styles.settingName}>Shorting FET</Text>
+              </Col>
+              <Col inline size={5}>
+                <SegmentedButtons
+                  buttons={[
+                    {value: 'true', label: 'On', disabled: enabled},
+                    {value: 'false', label: 'Off', disabled: enabled},
+                  ]}
+                  value={String(sensor.shortingFET)}
+                  onValueChange={setShortingFETEnabled}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col inline size={5}>
+                <Text style={styles.settingName}>Operating Mode</Text>
+              </Col>
+              <Col inline size={5}>
+                <DropDown
+                  visible={showOpModeDropdown}
+                  mode={'outlined'}
+                  onDismiss={() => setShowOpModeDropdown(false)}
+                  showDropDown={() => setShowOpModeDropdown(true)}
+                  value={'' + sensor.operatingMode}
+                  setValue={setOperatingMode}
+                  dropDownItemTextStyle={styles.dropdownItemText}
+                  theme={DefaultTheme}
+                  list={operatingModeValues}
+                  inputProps={{disabled: enabled}}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col size={10}>
+                <Text style={styles.textSectionTitle}>
+                  Reference Control (REFCN)
+                </Text>
+              </Col>
+            </Row>
+            <Row>
+              <Col inline size={5}>
+                <Text style={styles.settingName}>Reference Voltage</Text>
+              </Col>
+              <Col inline nopad size={5}>
                 <SegmentedButtons
                   buttons={[
                     {
                       disabled: enabled,
-                      value: '0',
-                      label: 'LMP91000_1',
+                      value: 'internal',
+                      label: 'Vdd',
                     },
-                    {
-                      disabled: enabled,
-                      value: '1',
-                      label: 'LMP91000_2',
-                    },
+                    {value: 'external', label: 'Vref', disabled: enabled},
                   ]}
-                  value={String(sensor.activeAfe)}
-                  onValueChange={setActiveAFE}
+                  value={sensor.referenceVoltageSource}
+                  onValueChange={setVRefValue}
                 />
-              </Row>
-              <Row inline />
-              <Row>
-                <Col size={10}>
-                  <Text style={styles.textSectionTitle}>
-                    Operating Mode (MODECN)
-                  </Text>
-                </Col>
-              </Row>
-              <Row>
-                <Col inline size={5}>
-                  <Text style={styles.settingName}>Shorting FET</Text>
-                </Col>
-                <Col inline size={5}>
-                  <SegmentedButtons
-                    buttons={[
-                      {value: 'true', label: 'On', disabled: enabled},
-                      {value: 'false', label: 'Off', disabled: enabled},
-                    ]}
-                    value={String(sensor.shortingFET)}
-                    onValueChange={setShortingFETEnabled}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col inline size={5}>
-                  <Text style={styles.settingName}>Operating Mode</Text>
-                </Col>
-                <Col inline size={5}>
-                  <DropDown
-                    visible={showOpModeDropdown}
-                    mode={'outlined'}
-                    onDismiss={() => setShowOpModeDropdown(false)}
-                    showDropDown={() => setShowOpModeDropdown(true)}
-                    value={'' + sensor.operatingMode}
-                    setValue={setOperatingMode}
-                    dropDownItemTextStyle={styles.dropdownItemText}
-                    theme={DefaultTheme}
-                    list={operatingModeValues}
-                    inputProps={{disabled: enabled}}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col size={10}>
-                  <Text style={styles.textSectionTitle}>
-                    Reference Control (REFCN)
-                  </Text>
-                </Col>
-              </Row>
-              <Row>
-                <Col inline size={5}>
-                  <Text style={styles.settingName}>Reference Voltage</Text>
-                </Col>
-                <Col inline nopad size={5}>
-                  <SegmentedButtons
-                    buttons={[
-                      {
-                        disabled: enabled,
-                        value: 'internal',
-                        label: 'Vdd',
-                      },
-                      {value: 'external', label: 'Vref', disabled: enabled},
-                    ]}
-                    value={sensor.referenceVoltageSource}
-                    onValueChange={setVRefValue}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col inline size={6}>
-                  <Text style={styles.settingName}>Bias Magnitude</Text>
-                </Col>
-                <Col inline size={4}>
-                  <DropDown
-                    visible={showBiasDropdown}
-                    mode={'outlined'}
-                    onDismiss={() => setShowBiasDropdown(false)}
-                    showDropDown={() => setShowBiasDropdown(true)}
-                    value={String(sensor.bias)}
-                    setValue={setBiasValue}
-                    dropDownItemTextStyle={styles.dropdownItemText}
-                    theme={DefaultTheme}
-                    inputProps={{disabled: enabled}}
-                    list={biasValueOptions.sort((a, b) => {
-                      return parseInt(a.value) - parseInt(b.value);
-                    })}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col inline size={6}>
-                  <Text style={styles.settingName}>Internal Zero</Text>
-                </Col>
-                <Col inline size={4}>
-                  <DropDown
-                    visible={showIntZDropdown}
-                    mode={'outlined'}
-                    onDismiss={() => setShowIntZDropdown(false)}
-                    showDropDown={() => setShowIntZDropdown(true)}
-                    value={String(sensor.internalZero)}
-                    setValue={setIntZValue}
-                    dropDownItemTextStyle={styles.dropdownItemText}
-                    inputProps={{disabled: enabled}}
-                    theme={DefaultTheme}
-                    list={intZValueOptions}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col size={10}>
-                  <Text style={styles.textSectionTitle}>
-                    Transimpedance Control (TIACN)
-                  </Text>
-                </Col>
-              </Row>
-              <Row>
-                <Col inline size={5}>
-                  <Text style={styles.settingName}>Gain (R_tia)</Text>
-                </Col>
-                <Col inline size={5}>
-                  <DropDown
-                    visible={showRTIADropdown}
-                    mode={'outlined'}
-                    onDismiss={() => setShowRTIADropdown(false)}
-                    showDropDown={() => setShowRTIADropdown(true)}
-                    value={String(sensor.rGain)}
-                    setValue={setRGainValue}
-                    dropDownItemTextStyle={styles.dropdownItemText}
-                    theme={DefaultTheme}
-                    inputProps={{disabled: enabled}}
-                    list={rTIAValueOptions}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col inline size={5}>
-                  <Text style={styles.settingName}>
-                    Load Resistance (R_load)
-                  </Text>
-                </Col>
-                <Col inline size={5}>
-                  <DropDown
-                    visible={showRLOADDropdown}
-                    mode={'outlined'}
-                    onDismiss={() => setShowRLOADDropdown(false)}
-                    showDropDown={() => setShowRLOADDropdown(true)}
-                    value={String(sensor.rLoad)}
-                    setValue={setRLoadValue}
-                    dropDownItemTextStyle={styles.dropdownItemText}
-                    theme={DefaultTheme}
-                    inputProps={{disabled: enabled}}
-                    list={rLOADValueOptions}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col>
-                  <Image
-                    source={require('../assets/3wire.png')}
-                    resizeMode="contain"
-                    style={{
-                      height: 200,
-                      width: '100%',
-                      marginTop: 10,
-                      marginBottom: 10,
-                    }}
-                  />
-                </Col>
-              </Row>
-            </Grid>
-          </Section>
+              </Col>
+            </Row>
+            <Row>
+              <Col inline size={6}>
+                <Text style={styles.settingName}>Bias Magnitude</Text>
+              </Col>
+              <Col inline size={4}>
+                <DropDown
+                  visible={showBiasDropdown}
+                  mode={'outlined'}
+                  onDismiss={() => setShowBiasDropdown(false)}
+                  showDropDown={() => setShowBiasDropdown(true)}
+                  value={String(sensor.bias)}
+                  setValue={setBiasValue}
+                  dropDownItemTextStyle={styles.dropdownItemText}
+                  theme={DefaultTheme}
+                  inputProps={{disabled: enabled}}
+                  list={biasValueOptions.sort((a, b) => {
+                    return parseInt(a.value) - parseInt(b.value);
+                  })}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col inline size={6}>
+                <Text style={styles.settingName}>Internal Zero</Text>
+              </Col>
+              <Col inline size={4}>
+                <DropDown
+                  visible={showIntZDropdown}
+                  mode={'outlined'}
+                  onDismiss={() => setShowIntZDropdown(false)}
+                  showDropDown={() => setShowIntZDropdown(true)}
+                  value={String(sensor.internalZero)}
+                  setValue={setIntZValue}
+                  dropDownItemTextStyle={styles.dropdownItemText}
+                  inputProps={{disabled: enabled}}
+                  theme={DefaultTheme}
+                  list={intZValueOptions}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col size={10}>
+                <Text style={styles.textSectionTitle}>
+                  Transimpedance Control (TIACN)
+                </Text>
+              </Col>
+            </Row>
+            <Row>
+              <Col inline size={5}>
+                <Text style={styles.settingName}>Gain (R_tia)</Text>
+              </Col>
+              <Col inline size={5}>
+                <DropDown
+                  visible={showRTIADropdown}
+                  mode={'outlined'}
+                  onDismiss={() => setShowRTIADropdown(false)}
+                  showDropDown={() => setShowRTIADropdown(true)}
+                  value={String(sensor.rGain)}
+                  setValue={setRGainValue}
+                  dropDownItemTextStyle={styles.dropdownItemText}
+                  theme={DefaultTheme}
+                  inputProps={{disabled: enabled}}
+                  list={rTIAValueOptions}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col inline size={5}>
+                <Text style={styles.settingName}>Load Resistance (R_load)</Text>
+              </Col>
+              <Col inline size={5}>
+                <DropDown
+                  visible={showRLOADDropdown}
+                  mode={'outlined'}
+                  onDismiss={() => setShowRLOADDropdown(false)}
+                  showDropDown={() => setShowRLOADDropdown(true)}
+                  value={String(sensor.rLoad)}
+                  setValue={setRLoadValue}
+                  dropDownItemTextStyle={styles.dropdownItemText}
+                  theme={DefaultTheme}
+                  inputProps={{disabled: enabled}}
+                  list={rLOADValueOptions}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Image
+                  source={require('../assets/3wire.png')}
+                  resizeMode="contain"
+                  style={{
+                    height: 200,
+                    width: '100%',
+                    marginTop: 10,
+                    marginBottom: 10,
+                  }}
+                />
+              </Col>
+            </Row>
+          </Grid>
         </View>
       </ScrollView>
     </View>
