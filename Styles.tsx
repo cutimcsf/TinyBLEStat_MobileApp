@@ -14,7 +14,10 @@ export const styles = StyleSheet.create({
   },
   textSectionTitle: {
     color: Colors.black,
+    verticalAlign: 'middle',
     fontSize: 24,
+    paddingTop: 20,
+    paddingBottom: 10,
     fontWeight: '600',
   },
   sectionTitle: {
@@ -32,6 +35,17 @@ export const styles = StyleSheet.create({
     color: Colors.black,
     fontSize: 16,
     fontWeight: '600',
+  },
+  dropdownItemText: {
+    color: Colors.black,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  settingName: {
+    paddingTop: 0,
+    color: Colors.black,
+    fontSize: 18,
+    fontWeight: '100',
   },
   highlight: {
     fontWeight: '700',

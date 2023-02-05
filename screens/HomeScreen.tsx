@@ -116,9 +116,9 @@ export default function HomeScreen(): JSX.Element {
         </Modal>
       </Portal>
       <ScrollView>
-        <TextSection title="Home Screen">
-          Scan for TinyBLEStat sensors here and allow users to enable/disable
-          them. Each enabled sensor should become a tab in the drawer navigator.
+        <TextSection title="Tiny BLE Stat Sensor Selection">
+          TinyBLEStat sensors will be listed below when found. Check the box to
+          enable them. Enabled sensors will appear in the navigation menu.
         </TextSection>
         <List.Section>
           {context.allSensors.map((sensor: TinyBLEStatSensor) => (

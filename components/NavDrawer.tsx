@@ -21,7 +21,7 @@ function NavDrawer(): JSX.Element {
         headerLeft: () => <MenuIcon />,
       }}
       drawerContent={props => <MenuContent {...props} />}>
-      <Drawer.Screen name="Tiny BLE Stat" component={HomeScreen} />
+      <Drawer.Screen name="Home" component={HomeScreen} />
       {context?.allSensors
         .filter(s => s.enabled)
         .sort((a, b) => a.displayName.localeCompare(b.displayName))
