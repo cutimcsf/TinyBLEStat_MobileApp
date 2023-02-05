@@ -7,17 +7,17 @@
 
 import React, {useEffect} from 'react';
 import {PermissionsAndroid, Platform, useColorScheme} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import {DarkTheme, NavigationContainer} from '@react-navigation/native';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
-import {BLEProvider} from './BleContext';
-import NavDrawer from './NavDrawer';
+import {BLEProvider} from './context/BleContext';
+import NavDrawer from './components/NavDrawer';
 import MenuIcon from './components/MenuIcon';
 import MenuContent from './components/MenuContent';
-import HomeScreen from './HomeScreen';
-import SensorScreen from './SensorScreen';
-import {Provider as PaperProvider} from 'react-native-paper';
+import HomeScreen from './screens/HomeScreen';
+import SensorScreen from './screens/SensorScreen';
+import {DefaultTheme, Provider as PaperProvider} from 'react-native-paper';
 
 function App(): JSX.Element {
   const Drawer = createDrawerNavigator();
@@ -44,7 +44,7 @@ function App(): JSX.Element {
   });
 
   return (
-    <PaperProvider>
+    <PaperProvider theme={DefaultTheme}>
       <BLEProvider>
         <SafeAreaProvider>
           <NavigationContainer>

@@ -10,22 +10,27 @@ import {
   Dimensions,
   ScrollView,
   StyleSheet,
-  Text,
   useColorScheme,
   View,
 } from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-import Section from './Section';
+import Section from '../components/Section';
 import Chart from './Chart';
-import SubSection from './SubSection';
+import SubSection from '../SubSection';
 import Buffer from 'buffer';
 import {BleError} from 'react-native-ble-plx';
-import {blemanager} from './BleContext';
-import TinyBLEStatSensor from './TinyBLEStatSensor';
+import {bleManager} from '../context/BleContext';
+import TinyBLEStatSensor from '../model/TinyBLEStatSensor';
 import {LineChart} from 'react-native-chart-kit';
+import {SegmentedButtons, Switch, Text} from 'react-native-paper';
+import {Grid, Row, Col} from 'react-native-paper-grid';
 
 export default function SensorScreen({route, props}): JSX.Element {
   const [sensor, setSensor] = useState<TinyBLEStatSensor>(route.params.sensor);
+  const [activeAFESensor, setActiveAFESensor] = useState<number>(1);
+  const [isPlotActive, setIsPlotActive] = useState<boolean>(false);
+  const dataRefreshHandle = useRef<number | undefined>(undefined);
+
   const isDarkMode = false; //useColorScheme() === 'dark';
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -184,7 +189,12 @@ export default function SensorScreen({route, props}): JSX.Element {
 
   useEffect(() => {
     if (sensor) {
-      setTimeout(pollValue, time.current);
+      if (dataRefreshHandle.current != undefined) {
+        clearTimeout(dataRefreshHandle.current);
+        dataRefreshHandle.current = undefined;
+      }
+
+      dataRefreshHandle.current = setTimeout(pollValue, time.current);
     }
   }, [pollValue, sensor]);
 
@@ -197,6 +207,7 @@ export default function SensorScreen({route, props}): JSX.Element {
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            marginLeft: chartLeftMargin,
           }}>
           <LineChart
             data={{
@@ -235,17 +246,37 @@ export default function SensorScreen({route, props}): JSX.Element {
               borderRadius: 16,
             }}
           />
-          <Section title={sensor.displayName + ' Settings'}>
-            <SubSection title="Device Status">
-              <View>
-                <Text>LMP91000 Sensor Status Register</Text>
-              </View>
-            </SubSection>
-            <SubSection title="Device Status">
-              <View>
-                <Text>LMP91000 Sensor Status Register</Text>
-              </View>
-            </SubSection>
+
+          <Section title={sensor.displayName + ' Configuration'}>
+            <View
+              style={{
+                // margin: 0,
+                // padding: 20,
+                height: '100%',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}>
+              <SegmentedButtons
+                buttons={[
+                  {
+                    value: '1',
+                    label: 'LMP91000_1',
+                  },
+                  {
+                    value: '2',
+                    label: 'LMP91000_2',
+                  },
+                ]}
+                value={activeAFESensor.toString()}
+                onValueChange={value => {
+                  console.log(
+                    'Setting active LMP91000 Sensor: ' + activeAFESensor,
+                  );
+                  setActiveAFESensor(parseInt(value));
+                }}
+              />
+            </View>
           </Section>
         </View>
       </ScrollView>

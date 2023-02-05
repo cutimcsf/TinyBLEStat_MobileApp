@@ -6,6 +6,7 @@ class TinyBLEStatSensor {
   displayName: string | undefined = undefined;
   enabled: boolean = false;
   sensorData: Array<number> = [0];
+  dummySensor: boolean = false;
   red: number = 255;
   green: number = 255;
   blue: number = 255;

@@ -2,13 +2,13 @@ import {createDrawerNavigator} from '@react-navigation/drawer';
 import React, {useContext, useEffect} from 'react';
 import {PermissionsAndroid, Platform} from 'react-native';
 import {Provider as PaperProvider} from 'react-native-paper';
-import {BLEContext, BLEProvider} from './BleContext';
+import {BLEContext, BLEProvider} from '../context/BleContext';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {NavigationContainer} from '@react-navigation/native';
-import MenuIcon from './components/MenuIcon';
-import MenuContent from './components/MenuContent';
-import HomeScreen from './HomeScreen';
-import SensorScreen from './SensorScreen';
+import MenuIcon from './MenuIcon';
+import MenuContent from './MenuContent';
+import HomeScreen from '../screens/HomeScreen';
+import SensorScreen from '../screens/SensorScreen';
 
 function NavDrawer(): JSX.Element {
   const context = useContext(BLEContext);
