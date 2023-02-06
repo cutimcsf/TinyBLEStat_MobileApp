@@ -117,8 +117,9 @@ export default function HomeScreen(): JSX.Element {
       </Portal>
       <ScrollView>
         <TextSection title="Tiny BLE Stat Sensor Selection">
-          TinyBLEStat sensors will be listed below when found. Check the box to
-          enable them. Enabled sensors will appear in the navigation menu.
+          TinyBLEStat sensors will be listed below when found. Tap on a sensor
+          to connect/disconnect. Connected sensors will appear in the navigation
+          menu.
         </TextSection>
         <List.Section>
           {context.allSensors.map((sensor: TinyBLEStatSensor) => (
