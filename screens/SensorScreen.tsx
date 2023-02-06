@@ -23,6 +23,7 @@ import Slider from 'react-native-sliders';
 import {Grid, Row, Col} from 'react-native-paper-grid';
 import {BLEContext} from '../context/BleContext';
 import {
+  timeout,
   biasValueOptions,
   intZValueOptions,
   rTIAValueOptions,
@@ -52,14 +53,10 @@ export default function SensorScreen({route}): JSX.Element {
   const updateSensorValue = useCallback(
     (oldSensor: TinyBLEStatSensor) => {
       let newSensor = Object.create(oldSensor);
-      setSensor(newSensor);
 
-      let allSensors = [...context!.allSensors];
-      let sensorIndex = allSensors.findIndex(
-        s => s.deviceId === oldSensor.deviceId,
-      );
-      allSensors[sensorIndex] = newSensor;
-      context!.setAllSensors(allSensors);
+      // Sensor is tracked in my own state and in the context ...
+      setSensor(newSensor);
+      context!.updateSensorInState(newSensor);
     },
     [context],
   );
@@ -148,18 +145,6 @@ export default function SensorScreen({route}): JSX.Element {
   const chartWidth = Dimensions.get('window').width * chartWidthPct;
   const chartLeftMargin =
     (Dimensions.get('window').width * (1 - chartWidthPct)) / 2;
-
-  /*
-   * This is a quick helper which wraps an asynchronous 'thenable' method in a timeout
-   */
-  const timeout = (promise: Promise<number | void>, time: number) =>
-    Promise.race([promise, new Promise((_r, rej) => setTimeout(rej, time))]);
-
-  /*
-   * 'time' in milliseconds -- used for the delay between sensor value updates, and
-   * also for the timeout around the asyncronous call to read the sensor value.
-   */
-  let time = useRef(200);
 
   let appendDataPoint = useCallback(
     (timestamp: number, sensor1value: number, sensor2value: number) => {

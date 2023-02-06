@@ -10,6 +10,12 @@ export function formatDate(x: Date) {
   )}`;
 }
 
+/*
+ * This is a quick helper which wraps an asynchronous 'thenable' method in a timeout
+ */
+export const timeout = (promise: Promise<number | void>, time: number) =>
+  Promise.race([promise, new Promise((_r, rej) => setTimeout(rej, time))]);
+
 export const biasValueOptions = [
   {label: '0%', value: '0'},
   {label: '1%', value: '1'},

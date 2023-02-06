@@ -77,11 +77,15 @@ export const BLEProvider = ({children}) => {
 
   let updateSensorInState = useCallback(
     (sensor: TinyBLEStatSensor) => {
-      let newSensors = allSensors.filter(x => x.deviceId !== sensor.deviceId);
-      newSensors.push(sensor);
-      newSensors.sort((a, b) => a.displayName.localeCompare(b.displayName));
-
-      setAllSensors(newSensors);
+      setAllSensors(
+        allSensors.map(s => {
+          if (s.deviceId === sensor.deviceId) {
+            return sensor;
+          } else {
+            return s;
+          }
+        }),
+      );
     },
     [allSensors],
   );
