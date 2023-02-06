@@ -117,7 +117,8 @@ export const BLEProvider = ({children}) => {
         if (
           device &&
           device.name &&
-          (device.name.startsWith('Clarkson') || device.name.startsWith('CU'))
+          (device.name.startsWith('Clarkson') ||
+            device.name.startsWith('TinyBLEStat'))
         ) {
           bleManager.stopDeviceScan();
 
