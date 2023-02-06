@@ -5,7 +5,13 @@
  * @format
  */
 
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {Dimensions, Image, ScrollView, View} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Section from '../components/Section';
@@ -16,8 +22,10 @@ import {Grid, Row, Col} from 'react-native-paper-grid';
 import {styles} from '../Styles';
 import DropDown from 'react-native-paper-dropdown';
 import Slider from 'react-native-sliders';
+import {BLEContext} from '../context/BleContext';
 
 export default function SensorScreen({route, props}): JSX.Element {
+  const context = useContext(BLEContext);
   const [sensor, setSensor] = useState<TinyBLEStatSensor>(route.params.sensor);
   const [enabled, setEnabled] = useState<boolean>(false);
   const [dacValue, setDacValue] = useState<number>(50);
@@ -93,6 +101,14 @@ export default function SensorScreen({route, props}): JSX.Element {
     (value: number) => {
       sensor.operatingMode = value;
       setSensor(sensor.cloneSensor());
+    },
+    [sensor],
+  );
+
+  const setSensorDACValue = useCallback(
+    (value: number) => {
+      sensor.dacValue = value;
+      setSensor(sensor.cloneSensor);
     },
     [sensor],
   );
@@ -396,7 +412,11 @@ export default function SensorScreen({route, props}): JSX.Element {
             value={String(enabled)}
             onValueChange={value => {
               console.log('Setting enabled: ' + value);
-              setEnabled(value === 'true');
+              let isEnabled = value === 'true';
+              if (isEnabled) {
+                context.writeConfigurationToDevice(sensor);
+              }
+              setEnabled(isEnabled);
             }}
           />
           <Grid>
@@ -445,12 +465,7 @@ export default function SensorScreen({route, props}): JSX.Element {
                   value={dacValue}
                   onValueChange={setDacValue}
                   onSlidingComplete={() => {
-                    console.log(
-                      'Write this value to DAC: 0x' +
-                        parseInt(
-                          Number((255 * dacValue) / 100).toFixed(0),
-                        ).toString(16),
-                    );
+                    setSensorDACValue(dacValue);
                   }}
                   minimumValue={0}
                   maximumValue={100}

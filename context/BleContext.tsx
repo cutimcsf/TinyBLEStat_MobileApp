@@ -18,6 +18,7 @@ import {
   BleError,
   BleManager,
   Device,
+  DeviceId,
   ScanMode,
   State,
 } from 'react-native-ble-plx';
@@ -30,8 +31,10 @@ LogBox.ignoreLogs(['new NativeEventEmitter']);
 
 interface ContextData {
   allSensors: Array<TinyBLEStatSensor>;
-  setAllSensors: () => {};
-  updateSensorInState: (sensor: TinyBLEStatSensor) => {};
+  setAllSensors: (sensors: Array<TinyBLEStatSensor>) => void;
+  updateSensorInState: (sensor: TinyBLEStatSensor) => void;
+  writeConfigurationToDevice: (sensor: TinyBLEStatSensor) => void;
+  getSensorFromBLEDevice: (deviceId: DeviceId) => TinyBLEStatSensor;
 }
 
 /*
@@ -130,6 +133,39 @@ export const BLEProvider = ({children}) => {
     [allSensors, updateSensorInState],
   );
 
+  let getSensorFromBLEDevice = useCallback(
+    (deviceId: DeviceId): TinyBLEStatSensor => {
+      const configurationString = '/wOwAAOwAAA='; // Read this from the device ...
+      let configurationBuffer = new Buffer.Buffer(
+        configurationString,
+        'base64',
+      );
+
+      return TinyBLEStatSensor.fromBytes(
+        deviceId,
+        'Placeholder 1',
+        Uint8Array.from(configurationBuffer),
+      );
+    },
+    [],
+  );
+
+  let writeConfigurationToDevice = useCallback(
+    (sensor: TinyBLEStatSensor) => {
+      let buffer = Buffer.Buffer.from(sensor.encodeConfiguration().buffer);
+      console.log(
+        'Writing encoded device configuration: ' + buffer.toString('base64'),
+      );
+
+      // Delete this code -- just a placeholder to make sure serialize/deserialize is working
+      let x = getSensorFromBLEDevice(sensor.deviceId);
+      console.log(
+        x.rLoad == sensor.rLoad ? 'rLoad matches' : 'rLoad does not match',
+      );
+    },
+    [getSensorFromBLEDevice],
+  );
+
   /**
    * This method scans for BLE devices until it finds one with a name beginning with "Clarkson"
    *
@@ -194,9 +230,6 @@ export const BLEProvider = ({children}) => {
 
     allSensors.forEach(s => {
       s.dummySensor = true;
-      s.red = Math.random() * 255;
-      s.green = Math.random() * 255;
-      s.blue = Math.random() * 255;
     });
 
     return () => {
@@ -213,6 +246,8 @@ export const BLEProvider = ({children}) => {
     allSensors: allSensors,
     setAllSensors: setAllSensors,
     updateSensorInState: updateSensorInState,
+    writeConfigurationToDevice: writeConfigurationToDevice,
+    getSensorFromBLEDevice: getSensorFromBLEDevice,
   };
 
   /*

@@ -7,11 +7,8 @@ class TinyBLEStatSensor {
 
   enabled: boolean = false;
   dummySensor: boolean = false;
-  red: number = 255;
-  green: number = 255;
-  blue: number = 255;
-
   private _activeAfe: number = 0;
+
   private _vRefValue: Array<string> = ['external', 'external'];
   private _biasValue: Array<number> = [0, 0];
   private _intZValue: Array<number> = [1, 1];
@@ -21,6 +18,7 @@ class TinyBLEStatSensor {
   private _operatingMode: Array<number> = [0, 0];
   private _sensorData1: Array<number> = [0];
   private _sensorData2: Array<number> = [0];
+  private _dacValue = 255;
 
   constructor(deviceId: DeviceId, name?: string) {
     this.deviceId = deviceId;
@@ -93,6 +91,14 @@ class TinyBLEStatSensor {
     this._shortingFETEnabled[this._activeAfe] = value;
   }
 
+  public get dacValue(): number {
+    return this._dacValue;
+  }
+
+  public set dacValue(value: number) {
+    this._dacValue = value;
+  }
+
   public getSensorData(afe: number): Array<number> {
     // console.log('getting data for afe ' + afe);
     switch (afe) {
@@ -119,9 +125,6 @@ class TinyBLEStatSensor {
 
     x.enabled = this.enabled;
     x.dummySensor = this.dummySensor;
-    x.red = this.red;
-    x.green = this.green;
-    x.blue = this.blue;
     x._activeAfe = this._activeAfe;
 
     x._vRefValue = [...this._vRefValue];
@@ -134,6 +137,54 @@ class TinyBLEStatSensor {
     x._sensorData1 = [...this._sensorData1];
     x._sensorData2 = [...this._sensorData2];
     return x;
+  }
+
+  public encodeConfiguration(): Uint8Array {
+    let bytes: Uint8Array = new Uint8Array(8);
+
+    bytes[0] = this._dacValue;
+    for (let i = 0; i < 2; i = i + 1) {
+      let tiacn: number = (this._rGainValue[i] << 2) | this._rLoadValue[i];
+      let refcn: number =
+        ((this._vRefValue[i] === 'internal' ? 0 : 1) << 7) |
+        (this._intZValue[i] << 5) |
+        ((this._biasValue[i] < 0 ? 0 : 1) << 4) |
+        Math.abs(this._biasValue[i]);
+      let modecn: number =
+        ((this._shortingFETEnabled[i] ? 1 : 0) << 7) | this._operatingMode[i];
+
+      bytes[3 * i + 1] = tiacn;
+      bytes[3 * i + 2] = refcn;
+      bytes[3 * i + 3] = modecn;
+    }
+
+    return bytes;
+  }
+
+  public static fromBytes(
+    deviceId: DeviceId,
+    name: string,
+    bytes: Uint8Array,
+  ): TinyBLEStatSensor {
+    let sensor = new TinyBLEStatSensor(deviceId, name);
+    sensor._dacValue = bytes[0];
+    for (let i = 0; i < 2; i = i + 1) {
+      let tiacn = bytes[3 * i + 1];
+      let refcn = bytes[3 * i + 2];
+      let modecn = bytes[3 * i + 3];
+
+      sensor._rGainValue[i] = (tiacn & 0x1c) >> 2;
+      sensor._rLoadValue[i] = tiacn & 0x03;
+
+      sensor._vRefValue[i] = refcn & 0x80 ? 'external' : 'internal';
+      sensor._intZValue[i] = (refcn & 0x60) >> 5;
+      sensor._biasValue[i] = (refcn & 0x0f) * (refcn & 0x10 ? 1 : -1);
+
+      sensor._shortingFETEnabled[i] = (modecn & 0x80) >> 1 == 1;
+      sensor._operatingMode[i] = modecn & 0x07;
+    }
+
+    return sensor;
   }
 }
 
