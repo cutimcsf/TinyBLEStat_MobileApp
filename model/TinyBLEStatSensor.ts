@@ -99,7 +99,7 @@ class TinyBLEStatSensor {
     this._dacValue = value;
   }
 
-  public getSensorData(afe: number): Array<number> {
+  public getSensorData(afe: number): Array<number> | undefined {
     // console.log('getting data for afe ' + afe);
     switch (afe) {
       case 0:
@@ -108,6 +108,8 @@ class TinyBLEStatSensor {
       case 1:
         return this._sensorData2;
     }
+
+    return undefined;
   }
 
   public setSensorData(afe: number, value: Array<number>) {
@@ -139,6 +141,16 @@ class TinyBLEStatSensor {
     return x;
   }
 
+  /**
+   * Returns a 7-byte array where:
+   *   Byte 0 = DAC Value
+   *   Byte 1 = LMP91000_1 TIACN register value
+   *   Byte 2 = LMP91000_1 REFCN register value
+   *   Byte 3 = LMP91000_1 MODECN reguster value
+   *   Byte 4 = LMP91000_2 TIACN register value
+   *   Byte 5 = LMP91000_2 REFCN register value
+   *   Byte 6 = LMP91000_2 MODECN reguster value
+   */
   public encodeConfiguration(): Uint8Array {
     let bytes: Uint8Array = new Uint8Array(8);
 
@@ -161,6 +173,14 @@ class TinyBLEStatSensor {
     return bytes;
   }
 
+  /**
+   * Returns a TinyBLEStatSensor instance with the configuration specified. See @encodeConfiguration
+   * for documentation on encoding.
+   *
+   * @param deviceId
+   * @param name
+   * @param bytes
+   */
   public static fromBytes(
     deviceId: DeviceId,
     name: string,
