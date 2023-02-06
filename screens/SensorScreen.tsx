@@ -273,7 +273,6 @@ export default function SensorScreen({route}): JSX.Element {
 
       dataRefreshHandle.current = setTimeout(
         async () => await timeout(readSensorValue(), 1000),
-        time.current,
       );
     }
   }, [enabled, readSensorValue, sensor]);
