@@ -1,5 +1,5 @@
-export function padNumber(x: number, n: number = 2) {
-  return String(x).padStart(n, '0');
+export function padNumber(x: number, n: number = 2, radix: number = 10) {
+  return x.toString(radix).padStart(n, '0');
 }
 
 export function formatDate(x: Date) {
@@ -79,3 +79,19 @@ export const operatingModeValues = [
   {label: 'TIA Off', value: '6'},
   {label: 'TIA On', value: '7'},
 ];
+
+export function osUUID(uuid) {
+  return Platform.OS === 'ios' ? uuid.toLowerCase() : uuid.toLowerCase();
+}
+
+export const CU_SENSOR_SERVICE_UUID = osUUID(
+  '907b0c97-e120-4685-8bfa-3bbf39ca79ac',
+);
+
+export const CU_SENSOR_DEVICE_CONFIG_CHARACTERISTIC = osUUID(
+  '959e4f6b-b245-4052-8b58-f0ed3d5329b9',
+);
+
+export const CU_SENSOR_LMP91000_VALUES_CHARACTERISTIC = osUUID(
+  '07c0afa9-cf35-4f96-a27d-dbdcb6d6b08b',
+);

@@ -45,7 +45,8 @@ export default function HomeScreen(): JSX.Element {
   const connectToSensor = useCallback(
     async (sensor: TinyBLEStatSensor): Promise<Device | undefined> => {
       try {
-        if (sensor.dummySensor) {
+        if (sensor.dummySensor == undefined) {
+          console.log('Refusing to connect to dummy sensor...');
           return undefined;
         }
 
@@ -77,12 +78,23 @@ export default function HomeScreen(): JSX.Element {
         ? 'Enabling sensor'
         : 'Disabling sensor';
 
+      if (sensor.dummySensor) {
+        context.updateSensorInState(sensor.cloneSensor());
+        hideModal();
+        return;
+      }
+
       if (sensor.enabled) {
-        connectToSensor(sensor).then(() => {
-          console.log('Sensor is ready for use.');
-          context.updateSensorInState(sensor.cloneSensor());
-          hideModal();
-        });
+        connectToSensor(sensor)
+          .then(() => {
+            console.log(
+              'Sensor is ready for use. Reading device configuration.',
+            );
+            return context.readConfigurationFromDevice(sensor);
+          })
+          .then(() => {
+            hideModal();
+          });
       } else {
         disconnectFromSensor(sensor).then(() => {
           console.log('Device connection terminated.');

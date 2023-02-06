@@ -1,6 +1,6 @@
-import {Device, DeviceId} from 'react-native-ble-plx';
-import {useState} from 'react';
-import RNFetchBlob from 'rn-fetch-blob';
+import {DeviceId} from 'react-native-ble-plx';
+import Buffer from 'buffer';
+import {padNumber} from './TinyBLEStatDefs';
 
 class TinyBLEStatSensor {
   readonly deviceId: DeviceId;
@@ -10,7 +10,7 @@ class TinyBLEStatSensor {
   dummySensor: boolean = false;
   private _activeAfe: number = 0;
 
-  private _dacValue = 255;
+  private _dacValue = 100;
   private _vRefValue: Array<string> = ['external', 'external'];
   private _biasValue: Array<number> = [0, 0];
   private _intZValue: Array<number> = [1, 1];
@@ -190,7 +190,21 @@ class TinyBLEStatSensor {
   public encodeConfiguration(): Uint8Array {
     let bytes: Uint8Array = new Uint8Array(8);
 
-    bytes[0] = this._dacValue;
+    // console.log(`DAC Value is ${this._dacValue.toString(10)}`);
+
+    let rawDacValue = Math.min(
+      Math.floor((this._dacValue * 0x10000) / 100),
+      0xffff,
+    );
+    // console.log(`RAW DAC Value is ${padNumber(rawDacValue, 4, 16)}`);
+
+    bytes[0] = rawDacValue & 0x00ff;
+    bytes[1] = (rawDacValue & 0xff00) >> 8;
+
+    // console.log(
+    //   `Encoded DAC Value as 0x${rawDacValue.toString(16)} of 0x10000`,
+    // );
+
     for (let i = 0; i < 2; i = i + 1) {
       let tiacn: number = (this._rGainValue[i] << 2) | this._rLoadValue[i];
       let refcn: number =
@@ -201,9 +215,13 @@ class TinyBLEStatSensor {
       let modecn: number =
         ((this._shortingFETEnabled[i] ? 1 : 0) << 7) | this._operatingMode[i];
 
-      bytes[3 * i + 1] = tiacn;
-      bytes[3 * i + 2] = refcn;
-      bytes[3 * i + 3] = modecn;
+      // console.log(`TIACN_${i}: 0b${padNumber(tiacn, 8, 2)}`);
+      // console.log(`REFCN_${i}: 0b${padNumber(refcn, 8, 2)}`);
+      // console.log(`MODECN_${i}: 0b${padNumber(modecn, 8, 2)}`);
+
+      bytes[3 * i + 2] = tiacn;
+      bytes[3 * i + 3] = refcn;
+      bytes[3 * i + 4] = modecn;
     }
 
     return bytes;
@@ -213,7 +231,6 @@ class TinyBLEStatSensor {
     let data1 = this.getSensorData(0);
     let data2 = this.getSensorData(1);
     let dates = this.getSensorData(2);
-    console.log(data1.length);
 
     const headerString = [
       'timestamp',
@@ -241,8 +258,36 @@ class TinyBLEStatSensor {
       ].join(delim) +
       '\n' +
       deviceConfiguration;
-    console.log(csvString);
+    // console.log(csvString);
     return csvString;
+  }
+
+  public loadConfiguration(bytes: Uint8Array | Buffer.Buffer) {
+    // console.log('Setting configuration ...');
+    let rawDacValue = bytes[0] | (bytes[1] << 8);
+    // console.log('RAW_DAC_VALUE: 0x' + padNumber(rawDacValue, 4, 16));
+    this._dacValue = (rawDacValue * 100) / 0x10000;
+    // console.log(`DAC_VALUE: ${this._dacValue}`);
+
+    for (let i = 0; i < 2; i = i + 1) {
+      let tiacn: number = bytes[3 * i + 2];
+      let refcn: number = bytes[3 * i + 3];
+      let modecn: number = bytes[3 * i + 4];
+
+      // console.log(`TIACN_${i}: 0b${padNumber(tiacn, 8, 2)}`);
+      // console.log(`REFCN_${i}: 0b${padNumber(refcn, 8, 2)}`);
+      // console.log(`MODECN_${i}: 0b${padNumber(modecn, 8, 2)}`);
+
+      this._rGainValue[i] = (tiacn & 0x1c) >> 2;
+      this._rLoadValue[i] = tiacn & 0x03;
+
+      this._vRefValue[i] = refcn & 0x80 ? 'external' : 'internal';
+      this._intZValue[i] = (refcn & 0x60) >> 5;
+      this._biasValue[i] = (refcn & 0x0f) * (refcn & 0x10 ? 1 : -1);
+
+      this._shortingFETEnabled[i] = (modecn & 0x80) >> 1 == 1;
+      this._operatingMode[i] = modecn & 0x07;
+    }
   }
 
   /**
@@ -256,25 +301,10 @@ class TinyBLEStatSensor {
   public static fromBytes(
     deviceId: DeviceId,
     name: string,
-    bytes: Uint8Array,
+    bytes: Uint8Array | Buffer.Buffer,
   ): TinyBLEStatSensor {
     let sensor = new TinyBLEStatSensor(deviceId, name);
-    sensor._dacValue = bytes[0];
-    for (let i = 0; i < 2; i = i + 1) {
-      let tiacn = bytes[3 * i + 1];
-      let refcn = bytes[3 * i + 2];
-      let modecn = bytes[3 * i + 3];
-
-      sensor._rGainValue[i] = (tiacn & 0x1c) >> 2;
-      sensor._rLoadValue[i] = tiacn & 0x03;
-
-      sensor._vRefValue[i] = refcn & 0x80 ? 'external' : 'internal';
-      sensor._intZValue[i] = (refcn & 0x60) >> 5;
-      sensor._biasValue[i] = (refcn & 0x0f) * (refcn & 0x10 ? 1 : -1);
-
-      sensor._shortingFETEnabled[i] = (modecn & 0x80) >> 1 == 1;
-      sensor._operatingMode[i] = modecn & 0x07;
-    }
+    sensor.loadConfiguration(bytes);
 
     return sensor;
   }

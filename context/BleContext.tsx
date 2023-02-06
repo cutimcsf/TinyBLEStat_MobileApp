@@ -26,6 +26,11 @@ import Buffer from 'buffer';
 
 import {AppState, LogBox} from 'react-native';
 import TinyBLEStatSensor from '../model/TinyBLEStatSensor';
+import {
+  CU_SENSOR_DEVICE_CONFIG_CHARACTERISTIC,
+  CU_SENSOR_LMP91000_VALUES_CHARACTERISTIC,
+  CU_SENSOR_SERVICE_UUID,
+} from '../model/TinyBLEStatDefs';
 
 LogBox.ignoreLogs(['new NativeEventEmitter']);
 
@@ -33,8 +38,10 @@ interface ContextData {
   allSensors: Array<TinyBLEStatSensor>;
   setAllSensors: (sensors: Array<TinyBLEStatSensor>) => void;
   updateSensorInState: (sensor: TinyBLEStatSensor) => void;
-  writeConfigurationToDevice: (sensor: TinyBLEStatSensor) => void;
   getSensorFromBLEDevice: (deviceId: DeviceId) => TinyBLEStatSensor;
+  writeConfigurationToDevice: (sensor: TinyBLEStatSensor) => Promise<void>;
+  readConfigurationFromDevice: (sensor: TinyBLEStatSensor) => Promise<void>;
+  readSensorValuesFromDevice: (sensor: TinyBLEStatSensor) => Promise<number[]>;
 }
 
 /*
@@ -67,13 +74,6 @@ export const BLEProvider = ({children}) => {
     // new TinyBLEStatSensor('Device3', 'Dummy Device 3'),
   ]);
   let [btState, setBTState] = useState(State.Unknown);
-
-  /*
-   * The service and characteristic UUIDs for the Clarkson Insole demo device's "readCounter"
-   * method.
-   */
-  const CU_FAB_SERVICE = '88189766-42ED-4E52-8E9F-47C7DECD82A9';
-  const CU_FAB_COUNTER_CHARACTERISTIC = 'F8898AF6-786E-4058-B910-4244CECD3008';
 
   let addSensorToState = useCallback(
     (sensor: TinyBLEStatSensor) => {
@@ -159,18 +159,79 @@ export const BLEProvider = ({children}) => {
     [],
   );
 
-  let writeConfigurationToDevice = useCallback(
-    (sensor: TinyBLEStatSensor) => {
-      let buffer = Buffer.Buffer.from(sensor.encodeConfiguration().buffer);
-      console.log(
-        'Writing encoded device configuration: ' + buffer.toString('base64'),
-      );
+  let readSensorValuesFromDevice = useCallback(
+    async (sensor: TinyBLEStatSensor) => {
+      try {
+        return bleManager
+          .readCharacteristicForDevice(
+            sensor.deviceId,
+            CU_SENSOR_SERVICE_UUID,
+            CU_SENSOR_LMP91000_VALUES_CHARACTERISTIC,
+          )
+          .then(characteristic => {
+            let now = Date.now();
+            let bytes = new Buffer.Buffer(characteristic.value!, 'base64');
+            let uint32arr = new Uint32Array(bytes.buffer);
 
-      // Delete this code -- just a placeholder to make sure serialize/deserialize is working
-      let x = getSensorFromBLEDevice(sensor.deviceId);
-      console.log(
-        x.rLoad === sensor.rLoad ? 'rLoad matches' : 'rLoad does not match',
-      );
+            return [now, uint32arr[0], uint32arr[1]];
+          });
+      } catch (error) {
+        console.log(
+          `Unexpected error reading from device ${sensor.deviceId}: ${error} with error code ${error.errorCode}`,
+        );
+      }
+    },
+    [],
+  );
+
+  let readConfigurationFromDevice = useCallback(
+    async (sensor: TinyBLEStatSensor) => {
+      try {
+        return bleManager
+          .readCharacteristicForDevice(
+            sensor.deviceId,
+            CU_SENSOR_SERVICE_UUID,
+            CU_SENSOR_DEVICE_CONFIG_CHARACTERISTIC,
+          )
+          .then(characteristic => {
+            let buffer = new Buffer.Buffer(characteristic.value!, 'base64');
+            sensor.loadConfiguration(buffer);
+            updateSensorInState(sensor.shallowCopy());
+          });
+      } catch (error) {
+        console.log(
+          `Unexpected error reading from device ${sensor.deviceId}: ${error} with error code ${error.errorCode}`,
+        );
+      }
+    },
+    [updateSensorInState],
+  );
+
+  let writeConfigurationToDevice = useCallback(
+    async (sensor: TinyBLEStatSensor) => {
+      if (sensor.dummySensor) {
+        return;
+      }
+
+      let buffer = Buffer.Buffer.from(sensor.encodeConfiguration().buffer);
+      let value = buffer.toString('base64');
+
+      try {
+        return bleManager
+          .writeCharacteristicWithResponseForDevice(
+            sensor.deviceId,
+            CU_SENSOR_SERVICE_UUID,
+            CU_SENSOR_DEVICE_CONFIG_CHARACTERISTIC,
+            value,
+          )
+          .then(() => {
+            console.log('Successfully wrote configuration to sensor...');
+          });
+      } catch (error) {
+        console.log(
+          `Unexpected error reading from device ${sensor.deviceId}: ${error} with error code ${error.errorCode}`,
+        );
+      }
     },
     [getSensorFromBLEDevice],
   );
@@ -236,8 +297,10 @@ export const BLEProvider = ({children}) => {
     allSensors: allSensors,
     setAllSensors: setAllSensors,
     updateSensorInState: updateSensorInState,
-    writeConfigurationToDevice: writeConfigurationToDevice,
     getSensorFromBLEDevice: getSensorFromBLEDevice,
+    writeConfigurationToDevice: writeConfigurationToDevice,
+    readConfigurationFromDevice: readConfigurationFromDevice,
+    readSensorValuesFromDevice: readSensorValuesFromDevice,
   };
 
   /*

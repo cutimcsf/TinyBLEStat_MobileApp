@@ -35,7 +35,7 @@ export default function SensorScreen({route}): JSX.Element {
   const context = useContext(BLEContext)!;
   const [sensor, setSensor] = useState<TinyBLEStatSensor>(route.params.sensor);
   const [enabled, setEnabled] = useState<boolean>(false);
-  const [dacValue, setDacValue] = useState<number>(50);
+  const [dacValue, setDacValue] = useState<number>(sensor.dacValue);
 
   const [chartData1, setChartData1] = useState<Array<number>>([0]);
   const [chartData2, setChartData2] = useState<Array<number>>([0]);
@@ -54,9 +54,11 @@ export default function SensorScreen({route}): JSX.Element {
     (oldSensor: TinyBLEStatSensor) => {
       let newSensor = Object.create(oldSensor);
 
-      // Sensor is tracked in my own state and in the context ...
-      setSensor(newSensor);
-      context!.updateSensorInState(newSensor);
+      context.writeConfigurationToDevice(newSensor).then(() => {
+        // Sensor is tracked in my own state and in the context ...
+        setSensor(newSensor);
+        context!.updateSensorInState(newSensor);
+      });
     },
     [context],
   );
@@ -112,7 +114,6 @@ export default function SensorScreen({route}): JSX.Element {
   const setShortingFETEnabled = useCallback(
     (value: string) => {
       let val = value === 'true';
-      console.log('Setting FET ' + val);
       sensor.shortingFET = val;
       updateSensorValue(sensor);
     },
@@ -169,85 +170,19 @@ export default function SensorScreen({route}): JSX.Element {
    * @type {(function(): Promise<number|number>)|*}
    */
   let readSensorValue = useCallback(async () => {
+    let vals: number[] = [];
+
     if (sensor.dummySensor) {
-      appendDataPoint(Date.now(), Math.random() * 50, Math.random() * 50);
-      updateSensorValue(sensor);
+      vals.push(Date.now());
+      vals.push(Math.random() * 2500);
+      vals.push(Math.random() * 2500);
     } else {
-      // // Attempt to connect
-      // console.log('Attempting to read sensor value.');
-      // return blemanager
-      //   .readCharacteristicForDevice(
-      //     sensor.id,
-      //     CU_FAB_SERVICE,
-      //     CU_FAB_COUNTER_CHARACTERISTIC,
-      //   )
-      //   .then(characteristic => {
-      //     console.log(
-      //       'Read sensor value from service {' +
-      //         characteristic.serviceUUID +
-      //         '} and characteristic {' +
-      //         characteristic.uuid +
-      //         '}.',
-      //     );
-      //
-      //     // Characteristic values are base-64 encoded buffers in the
-      //     // react-native-ble-plx API ... here we're decoding it as a
-      //     // single 8-bit integer, but I didn't actually cross-reference
-      //     // this against the device's firmware ... it's possible the device
-      //     // is returning a 16 or 32-bit integer value? In which case, we
-      //     // need to decode up to 4 bytes of data from this buffer ... keep
-      //     // in mind there will be an endian mismatch, so you'll need to flip
-      //     // the bytes around and so some bit-shifting if needed.
-      //     console.log(
-      //       'Attempting to decode characteristic value as base64 encoded buffer.',
-      //     );
-      //     let buffer = new Buffer(characteristic.value, 'base64');
-      //
-      //     console.log('Buffer has length ' + buffer.length);
-      //     let value = Uint8Array.from(buffer)[0];
-      //
-      //     console.log(
-      //       'Decoded value ' + value + ' - appending to chart data array.',
-      //     );
-      //
-      //     appendDataPoint(value);
-      //
-      //     return value;
-      //   })
-      //   .catch(error => {
-      //     console.error('Unexpected error occurred reading sensor value.');
-      //     if (error instanceof BleError) {
-      //       console.error('[' + error.errorCode + '] ' + error.reason);
-      //     }
-      //
-      //     console.error(
-      //       'Attempting to cancel connection to device if one existed...',
-      //     );
-      //     try {
-      //       blemanager
-      //         .cancelDeviceConnection(sensor.id)
-      //         .then(() => {
-      //           if (error) {
-      //             console.error(error);
-      //           }
-      //         })
-      //         .catch(error2 => {
-      //           if (error2) {
-      //             console.error(error2);
-      //           }
-      //         });
-      //     } catch (error2) {
-      //       console.error('Attempt to cancel connection failed');
-      //       if (error2 instanceof BleError) {
-      //         console.error('[' + error2.errorCode + '] ' + error2.reason);
-      //       } else {
-      //         console.error(error);
-      //       }
-      //     }
-      //   });
+      vals = await context.readSensorValuesFromDevice(sensor);
     }
-    // appendDataPoint(0, value);
-  }, [sensor, updateSensorValue]);
+
+    appendDataPoint(vals[0], vals[1], vals[2]);
+    updateSensorValue(sensor);
+  }, [appendDataPoint, context, sensor, updateSensorValue]);
 
   useEffect(() => {
     if (sensor && enabled) {
@@ -322,9 +257,6 @@ export default function SensorScreen({route}): JSX.Element {
             onValueChange={value => {
               console.log('Setting enabled: ' + value);
               let isEnabled = value === 'true';
-              if (isEnabled) {
-                context.writeConfigurationToDevice(sensor);
-              }
               setEnabled(isEnabled);
             }}
           />
