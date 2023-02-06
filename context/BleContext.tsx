@@ -75,6 +75,19 @@ export const BLEProvider = ({children}) => {
   const CU_FAB_SERVICE = '88189766-42ED-4E52-8E9F-47C7DECD82A9';
   const CU_FAB_COUNTER_CHARACTERISTIC = 'F8898AF6-786E-4058-B910-4244CECD3008';
 
+  let addSensorToState = useCallback(
+    (sensor: TinyBLEStatSensor) => {
+      let newAllSensors = allSensors.filter(
+        s => s.deviceId !== sensor.deviceId,
+      );
+      newAllSensors.push(sensor);
+      newAllSensors.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+      setAllSensors(newAllSensors);
+    },
+    [allSensors],
+  );
+
   let updateSensorInState = useCallback(
     (sensor: TinyBLEStatSensor) => {
       setAllSensors(
@@ -106,13 +119,11 @@ export const BLEProvider = ({children}) => {
           device.name &&
           (device.name.startsWith('Clarkson') || device.name.startsWith('CU'))
         ) {
+          bleManager.stopDeviceScan();
+
           // Do I know this device?
           // console.log('Checking for device id ' + JSON.stringify(device.id));
-          if (
-            allSensors.filter(
-              s => JSON.stringify(s.deviceId) === JSON.stringify(device.id),
-            ).length === 0
-          ) {
+          if (allSensors.filter(s => s.deviceId === device.id).length === 0) {
             // Before we can use the device we found, we must (1) connect to it, and
             // (2) discover its services and characteristics. This is time-consuming
             // so we do it here once, rather than each time we need to read a value.
@@ -123,12 +134,12 @@ export const BLEProvider = ({children}) => {
                 JSON.stringify(device.id),
             );
 
-            updateSensorInState(new TinyBLEStatSensor(device.id, device.name));
+            addSensorToState(new TinyBLEStatSensor(device.id, device.name));
           }
         }
       }
     },
-    [allSensors, updateSensorInState],
+    [allSensors, addSensorToState],
   );
 
   let getSensorFromBLEDevice = useCallback(
@@ -216,7 +227,7 @@ export const BLEProvider = ({children}) => {
     return () => {
       bleManager.stopDeviceScan();
     };
-  }, [btState]);
+  }, [btState, onDiscoverDevice]);
 
   /*
    * This is the actual object we'll provide as the context to nested elements.
