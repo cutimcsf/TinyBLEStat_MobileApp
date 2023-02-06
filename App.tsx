@@ -6,22 +6,15 @@
  */
 
 import React, {useEffect} from 'react';
-import {PermissionsAndroid, Platform, useColorScheme} from 'react-native';
-import {DarkTheme, NavigationContainer} from '@react-navigation/native';
-import {createDrawerNavigator} from '@react-navigation/drawer';
+import {PermissionsAndroid, Platform} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import {BLEProvider} from './context/BleContext';
 import NavDrawer from './components/NavDrawer';
-import MenuIcon from './components/MenuIcon';
-import MenuContent from './components/MenuContent';
-import HomeScreen from './screens/HomeScreen';
-import SensorScreen from './screens/SensorScreen';
 import {DefaultTheme, Provider as PaperProvider} from 'react-native-paper';
 
 function App(): JSX.Element {
-  const Drawer = createDrawerNavigator();
-
   useEffect(() => {
     // Get android permission for location... this is required
     // for bluetooth access ...
@@ -50,7 +43,6 @@ function App(): JSX.Element {
           <NavigationContainer>
             <NavDrawer />
           </NavigationContainer>
-          {/*<HomeScreen/>*/}
         </SafeAreaProvider>
       </BLEProvider>
     </PaperProvider>

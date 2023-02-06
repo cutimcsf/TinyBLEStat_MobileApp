@@ -125,6 +125,37 @@ class TinyBLEStatSensor {
     }
   }
 
+  public appendDataPoint(
+    timestamp: number,
+    sensor1value: number,
+    sensor2value: number,
+  ) {
+    this._timestamps.push(timestamp);
+    this._sensorData1.push(sensor1value);
+    this._sensorData2.push(sensor2value);
+  }
+
+  public shallowCopy(): TinyBLEStatSensor {
+    let x = new TinyBLEStatSensor(this.deviceId, this.displayName);
+
+    x.enabled = this.enabled;
+    x.dummySensor = this.dummySensor;
+    x._activeAfe = this._activeAfe;
+
+    x._vRefValue = this._vRefValue;
+    x._biasValue = this._biasValue;
+    x._intZValue = this._intZValue;
+    x._rLoadValue = this._rLoadValue;
+    x._rGainValue = this._rGainValue;
+    x._shortingFETEnabled = this._shortingFETEnabled;
+    x._operatingMode = this._operatingMode;
+
+    x._timestamps = this._timestamps;
+    x._sensorData1 = this._sensorData1;
+    x._sensorData2 = this._sensorData2;
+    return x;
+  }
+
   public cloneSensor(): TinyBLEStatSensor {
     let x = new TinyBLEStatSensor(this.deviceId, this.displayName);
 

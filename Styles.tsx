@@ -50,4 +50,15 @@ export const styles = StyleSheet.create({
   highlight: {
     fontWeight: '700',
   },
+  chartStyle: {
+    marginVertical: 8,
+    borderRadius: 16,
+  },
+  sensorScreenViewStyle: {flexGrow: 1},
+  sensorScreenImageStyle: {
+    height: 200,
+    width: '100%',
+    marginTop: 10,
+    marginBottom: 10,
+  },
 });

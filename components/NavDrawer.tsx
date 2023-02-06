@@ -1,15 +1,11 @@
 import {createDrawerNavigator} from '@react-navigation/drawer';
-import React, {useCallback, useContext, useEffect} from 'react';
-import {PermissionsAndroid, Platform, ShareContent} from 'react-native';
-import {IconButton, Provider as PaperProvider} from 'react-native-paper';
-import {BLEContext, BLEProvider} from '../context/BleContext';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {NavigationContainer} from '@react-navigation/native';
+import React, {useCallback, useContext} from 'react';
+import {IconButton} from 'react-native-paper';
+import {BLEContext} from '../context/BleContext';
 import MenuIcon from './MenuIcon';
 import MenuContent from './MenuContent';
 import HomeScreen from '../screens/HomeScreen';
 import SensorScreen from '../screens/SensorScreen';
-import TinyBLEStatSensor from '../model/TinyBLEStatSensor';
 import RNFetchBlob from 'rn-fetch-blob';
 import Share from 'react-native-share';
 import {DeviceId} from 'react-native-ble-plx';
@@ -40,20 +36,12 @@ function NavDrawer(): JSX.Element {
 
         let shareUrl = `file://${pathToWrite}`;
         console.log(`Sharing URL: ${shareUrl}`);
-        const result = await Share.open({
+        await Share.open({
           title: `${s.displayName} Data Export.csv`,
           url: shareUrl,
           type: 'text/csv',
         });
-        if (result.action === Share.sharedAction) {
-          if (result.activityType) {
-            // shared with activity type of result.activityType
-          } else {
-            // shared
-          }
-        } else if (result.action === Share.dismissedAction) {
-          // dismissed
-        }
+        await RNFetchBlob.fs.unlink(pathToWrite);
       } catch (error: any) {
         console.log(error.message);
       }

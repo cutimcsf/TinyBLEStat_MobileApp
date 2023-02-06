@@ -6,15 +6,8 @@
  */
 
 import React, {useCallback, useContext, useRef} from 'react';
-import {
-  FlatList,
-  ScrollView,
-  StyleSheet,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {ScrollView} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-import Section from '../components/Section';
 import TextSection from '../components/TextSection';
 import {BLEContext, bleManager} from '../context/BleContext';
 import TinyBLEStatSensor from '../model/TinyBLEStatSensor';
@@ -25,7 +18,6 @@ import {Device} from 'react-native-ble-plx';
 
 export default function HomeScreen(): JSX.Element {
   const [visible, setVisible] = React.useState(false);
-  const isDarkMode = useColorScheme() === 'dark';
   const context = useContext(BLEContext)!;
   const modalMessage = useRef<string>('Enabling sensor ... please wait ...');
 
@@ -88,13 +80,13 @@ export default function HomeScreen(): JSX.Element {
       if (sensor.enabled) {
         connectToSensor(sensor).then(() => {
           console.log('Sensor is ready for use.');
-          context.updateSensorInState(sensor);
+          context.updateSensorInState(sensor.cloneSensor());
           hideModal();
         });
       } else {
         disconnectFromSensor(sensor).then(() => {
           console.log('Device connection terminated.');
-          context.updateSensorInState(sensor);
+          context.updateSensorInState(sensor.cloneSensor());
           hideModal();
         });
       }
@@ -128,16 +120,17 @@ export default function HomeScreen(): JSX.Element {
               titleStyle={styles.listItemTitle}
               key={'tinyBLEState_' + sensor.deviceId}
               title={sensor.displayName}
-              onPress={event => {
+              onPress={() => {
                 showModal();
                 handleToggle(sensor);
               }}
-              left={props => (
+              right={() => (
                 <Checkbox.Item
+                  label={''}
                   status={sensor.enabled ? 'checked' : 'unchecked'}
                 />
               )}
-              right={props => <List.Icon {...props} icon="bluetooth" />}
+              left={props => <List.Icon {...props} icon="bluetooth" />}
             />
           ))}
         </List.Section>

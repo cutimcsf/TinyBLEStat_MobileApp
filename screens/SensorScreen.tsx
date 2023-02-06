@@ -14,14 +14,13 @@ import React, {
 } from 'react';
 import {Dimensions, Image, ScrollView, View} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-import Section from '../components/Section';
 import TinyBLEStatSensor from '../model/TinyBLEStatSensor';
 import {LineChart} from 'react-native-chart-kit';
 import {DefaultTheme, SegmentedButtons, Text} from 'react-native-paper';
-import {Grid, Row, Col} from 'react-native-paper-grid';
 import {styles} from '../Styles';
 import DropDown from 'react-native-paper-dropdown';
 import Slider from 'react-native-sliders';
+import {Grid, Row, Col} from 'react-native-paper-grid';
 import {BLEContext} from '../context/BleContext';
 import {
   biasValueOptions,
@@ -31,14 +30,14 @@ import {
   operatingModeValues,
 } from '../model/TinyBLEStatDefs';
 
-export default function SensorScreen({route, props}): JSX.Element {
-  const context = useContext(BLEContext);
+export default function SensorScreen({route}): JSX.Element {
+  const context = useContext(BLEContext)!;
   const [sensor, setSensor] = useState<TinyBLEStatSensor>(route.params.sensor);
   const [enabled, setEnabled] = useState<boolean>(false);
   const [dacValue, setDacValue] = useState<number>(50);
 
-  const [sensorData1, setSensorData1] = useState<Array<number>>([0]);
-  const [sensorData2, setSensorData2] = useState<Array<number>>([0]);
+  const [chartData1, setChartData1] = useState<Array<number>>([0]);
+  const [chartData2, setChartData2] = useState<Array<number>>([0]);
 
   /**
    * timeout handle for the read value loop...
@@ -51,27 +50,26 @@ export default function SensorScreen({route, props}): JSX.Element {
   const [showOpModeDropdown, setShowOpModeDropdown] = useState<boolean>(false);
 
   const updateSensorValue = useCallback(
-    (sensor: TinyBLEStatSensor) => {
-      let newSensor = sensor.cloneSensor();
+    (oldSensor: TinyBLEStatSensor) => {
+      let newSensor = Object.create(oldSensor);
       setSensor(newSensor);
 
-      let allSensors = [
-        ...context!.allSensors.filter(s => s.deviceId != newSensor.deviceId),
-        newSensor,
-      ];
-      allSensors.sort((a, b) => a.displayName!.localeCompare(b.displayName!));
-
-      context?.setAllSensors(allSensors);
+      let allSensors = [...context!.allSensors];
+      let sensorIndex = allSensors.findIndex(
+        s => s.deviceId === oldSensor.deviceId,
+      );
+      allSensors[sensorIndex] = newSensor;
+      context!.setAllSensors(allSensors);
     },
     [context],
   );
 
   const setActiveAFE = useCallback(
     (value: string) => {
-      sensor.activeAfe = parseInt(value);
+      sensor.activeAfe = parseInt(value, 10);
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setVRefValue = useCallback(
@@ -79,7 +77,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       sensor.referenceVoltageSource = value;
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setBiasValue = useCallback(
@@ -87,7 +85,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       sensor.bias = value;
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setIntZValue = useCallback(
@@ -95,7 +93,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       sensor.internalZero = value;
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setRLoadValue = useCallback(
@@ -103,7 +101,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       sensor.rLoad = value;
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setRGainValue = useCallback(
@@ -111,7 +109,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       sensor.rGain = value;
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setShortingFETEnabled = useCallback(
@@ -121,7 +119,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       sensor.shortingFET = val;
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setOperatingMode = useCallback(
@@ -129,15 +127,15 @@ export default function SensorScreen({route, props}): JSX.Element {
       sensor.operatingMode = value;
       updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const setSensorDACValue = useCallback(
     (value: number) => {
       sensor.dacValue = value;
-      setSensor(sensor.cloneSensor);
+      updateSensorValue(sensor);
     },
-    [sensor],
+    [sensor, updateSensorValue],
   );
 
   const isDarkMode = false; //useColorScheme() === 'dark';
@@ -164,20 +162,11 @@ export default function SensorScreen({route, props}): JSX.Element {
   let time = useRef(200);
 
   let appendDataPoint = useCallback(
-    (afe: number, value: number | undefined) => {
-      if (value === undefined) {
-        return;
-      }
+    (timestamp: number, sensor1value: number, sensor2value: number) => {
+      sensor.appendDataPoint(timestamp, sensor1value, sensor2value);
 
-      // console.log('Getting current data');
-      sensor.setSensorData(afe, [...sensor.getSensorData(afe), value]);
-
-      let sensorData: Array<number> = [...sensor.getSensorData(afe)];
-      if (afe == 0) {
-        setSensorData1(sensorData.slice(-25));
-      } else if (afe == 1) {
-        setSensorData2(sensorData.slice(-25));
-      }
+      setChartData1(sensor.getSensorData(0).slice(-10));
+      setChartData2(sensor.getSensorData(1).slice(-10));
     },
     [sensor],
   );
@@ -195,12 +184,8 @@ export default function SensorScreen({route, props}): JSX.Element {
    * @type {(function(): Promise<number|number>)|*}
    */
   let readSensorValue = useCallback(async () => {
-    let value: number | undefined;
-
     if (sensor.dummySensor) {
-      appendDataPoint(0, Math.random() * 50);
-      appendDataPoint(1, Math.random() * 50);
-      appendDataPoint(2, new Date().getTime());
+      appendDataPoint(Date.now(), Math.random() * 50, Math.random() * 50);
       updateSensorValue(sensor);
     } else {
       // // Attempt to connect
@@ -277,17 +262,17 @@ export default function SensorScreen({route, props}): JSX.Element {
       //   });
     }
     // appendDataPoint(0, value);
-  }, [appendDataPoint, sensor]);
+  }, [sensor, updateSensorValue]);
 
   useEffect(() => {
     if (sensor && enabled) {
-      if (dataRefreshHandle.current != undefined) {
+      if (dataRefreshHandle.current !== undefined) {
         clearTimeout(dataRefreshHandle.current);
         dataRefreshHandle.current = undefined;
       }
 
       dataRefreshHandle.current = setTimeout(
-        async () => await timeout(readSensorValue(), time.current),
+        async () => await timeout(readSensorValue(), 1000),
         time.current,
       );
     }
@@ -297,7 +282,7 @@ export default function SensorScreen({route, props}): JSX.Element {
     <View style={backgroundStyle}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{flexGrow: 1}}
+        contentContainerStyle={styles.sensorScreenViewStyle}
         style={backgroundStyle}>
         <View
           style={{
@@ -310,12 +295,12 @@ export default function SensorScreen({route, props}): JSX.Element {
               datasets: [
                 {
                   key: 'AFE_1',
-                  data: sensorData1,
+                  data: chartData1,
                   color: (opacity = 1) => `rgba(255, 255, 0, ${opacity})`,
                 },
                 {
                   key: 'AFE_2',
-                  data: sensorData2,
+                  data: chartData2,
                   color: (opacity = 1) => `rgba(0,0,255, ${opacity})`,
                 },
               ],
@@ -341,11 +326,8 @@ export default function SensorScreen({route, props}): JSX.Element {
                 stroke: '#ffa726',
               },
             }}
-            //bezier
-            style={{
-              marginVertical: 8,
-              borderRadius: 16,
-            }}
+            bezier
+            style={styles.chartStyle}
           />
           <SegmentedButtons
             buttons={[
@@ -507,7 +489,7 @@ export default function SensorScreen({route, props}): JSX.Element {
                   theme={DefaultTheme}
                   inputProps={{disabled: enabled}}
                   list={biasValueOptions.sort((a, b) => {
-                    return parseInt(a.value) - parseInt(b.value);
+                    return parseInt(a.value, 10) - parseInt(b.value, 10);
                   })}
                 />
               </Col>
@@ -581,12 +563,7 @@ export default function SensorScreen({route, props}): JSX.Element {
                 <Image
                   source={require('../assets/3wire.png')}
                   resizeMode="contain"
-                  style={{
-                    height: 200,
-                    width: '100%',
-                    marginTop: 10,
-                    marginBottom: 10,
-                  }}
+                  style={styles.sensorScreenImageStyle}
                 />
               </Col>
             </Row>
