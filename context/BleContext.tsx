@@ -61,12 +61,6 @@ export const bleManager = new BleManager();
  */
 export const BLEProvider = ({children}) => {
   const appState = useRef(AppState.currentState);
-  // const [appStateVisible, setAppStateVisible] = useState(appState.current);
-
-  /*
-   * The discovered sensor object
-   */
-  let [sensor, setSensor] = useState(undefined);
   let [allSensors, setAllSensors] = useState([
     new TinyBLEStatSensor('Device1', 'Dummy Device 1'),
     // new TinyBLEStatSensor('Device2', 'Dummy Device 2'),
@@ -112,8 +106,8 @@ export const BLEProvider = ({children}) => {
           // console.log('Checking for device id ' + JSON.stringify(device.id));
           if (
             allSensors.filter(
-              s => JSON.stringify(s.deviceId) == JSON.stringify(device.id),
-            ).length == 0
+              s => JSON.stringify(s.deviceId) === JSON.stringify(device.id),
+            ).length === 0
           ) {
             // Before we can use the device we found, we must (1) connect to it, and
             // (2) discover its services and characteristics. This is time-consuming
@@ -160,37 +154,11 @@ export const BLEProvider = ({children}) => {
       // Delete this code -- just a placeholder to make sure serialize/deserialize is working
       let x = getSensorFromBLEDevice(sensor.deviceId);
       console.log(
-        x.rLoad == sensor.rLoad ? 'rLoad matches' : 'rLoad does not match',
+        x.rLoad === sensor.rLoad ? 'rLoad matches' : 'rLoad does not match',
       );
     },
     [getSensorFromBLEDevice],
   );
-
-  /**
-   * This method scans for BLE devices until it finds one with a name beginning with "Clarkson"
-   *
-   * Once it's found, we stop scanning, obtain a connection to the device, and then
-   * save the device in the 'sensor' state variable defined above.
-   *
-   * Methods, like variables, get redefined over and over in react everytime the object's state
-   * changes -- so here, we use the 'useCallback' hook to wrap the method definition. By doing so,
-   * we define the method and the things it's dependent on. A method wrapped in a useCallback will
-   * only be redefined if one if its dependencies is changed -- in this case, there are no
-   * dependencies, so the method is never redefined.
-   */
-  useEffect(() => {
-    console.log('Starting scanAndConnect!');
-    // Start scanning for BLE devices -- we don't use any filters, so it'll discover everything in range.
-    bleManager.startDeviceScan(
-      null,
-      {scanMode: ScanMode.Balanced},
-      onDiscoverDevice,
-    );
-
-    return () => {
-      bleManager.stopDeviceScan();
-    };
-  }, [allSensors, onDiscoverDevice]);
 
   /*
    * A react component can respond to state changes using a 'useEffect' hook ... this
@@ -211,17 +179,6 @@ export const BLEProvider = ({children}) => {
         nextAppState === 'active'
       ) {
         console.log('App returning to foreground -- calling scanAndConnect');
-      } else if (sensor) {
-        console.log(
-          'App moving to background -- attempting to disconnecting from sensor',
-        );
-        try {
-          bleManager.cancelDeviceConnection(sensor.id).then(() => {
-            console.log(
-              'Disconnected from sensor on transition to background.',
-            );
-          });
-        } catch (error) {}
       }
 
       appState.current = nextAppState;
@@ -232,8 +189,17 @@ export const BLEProvider = ({children}) => {
       s.dummySensor = true;
     });
 
+    console.log('Starting scanAndConnect!');
+    // Start scanning for BLE devices -- we don't use any filters, so it'll discover everything in range.
+    bleManager.startDeviceScan(
+      null,
+      {scanMode: ScanMode.Balanced},
+      onDiscoverDevice,
+    );
+
     return () => {
       console.error('Unmounting context');
+      bleManager.stopDeviceScan();
       subscription.remove();
       bluetoothStateSubscription.remove();
     };

@@ -23,12 +23,23 @@ import {styles} from '../Styles';
 import DropDown from 'react-native-paper-dropdown';
 import Slider from 'react-native-sliders';
 import {BLEContext} from '../context/BleContext';
+import {
+  biasValueOptions,
+  intZValueOptions,
+  rTIAValueOptions,
+  rLOADValueOptions,
+  operatingModeValues,
+} from '../model/TinyBLEStatDefs';
 
 export default function SensorScreen({route, props}): JSX.Element {
   const context = useContext(BLEContext);
   const [sensor, setSensor] = useState<TinyBLEStatSensor>(route.params.sensor);
   const [enabled, setEnabled] = useState<boolean>(false);
   const [dacValue, setDacValue] = useState<number>(50);
+
+  const [sensorData1, setSensorData1] = useState<Array<number>>([0]);
+  const [sensorData2, setSensorData2] = useState<Array<number>>([0]);
+
   /**
    * timeout handle for the read value loop...
    */
@@ -39,10 +50,26 @@ export default function SensorScreen({route, props}): JSX.Element {
   const [showRLOADDropdown, setShowRLOADDropdown] = useState<boolean>(false);
   const [showOpModeDropdown, setShowOpModeDropdown] = useState<boolean>(false);
 
+  const updateSensorValue = useCallback(
+    (sensor: TinyBLEStatSensor) => {
+      let newSensor = sensor.cloneSensor();
+      setSensor(newSensor);
+
+      let allSensors = [
+        ...context!.allSensors.filter(s => s.deviceId != newSensor.deviceId),
+        newSensor,
+      ];
+      allSensors.sort((a, b) => a.displayName!.localeCompare(b.displayName!));
+
+      context?.setAllSensors(allSensors);
+    },
+    [context],
+  );
+
   const setActiveAFE = useCallback(
     (value: string) => {
       sensor.activeAfe = parseInt(value);
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -50,7 +77,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   const setVRefValue = useCallback(
     (value: string) => {
       sensor.referenceVoltageSource = value;
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -58,7 +85,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   const setBiasValue = useCallback(
     (value: number) => {
       sensor.bias = value;
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -66,7 +93,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   const setIntZValue = useCallback(
     (value: number) => {
       sensor.internalZero = value;
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -74,7 +101,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   const setRLoadValue = useCallback(
     (value: number) => {
       sensor.rLoad = value;
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -82,7 +109,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   const setRGainValue = useCallback(
     (value: number) => {
       sensor.rGain = value;
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -92,7 +119,7 @@ export default function SensorScreen({route, props}): JSX.Element {
       let val = value === 'true';
       console.log('Setting FET ' + val);
       sensor.shortingFET = val;
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -100,7 +127,7 @@ export default function SensorScreen({route, props}): JSX.Element {
   const setOperatingMode = useCallback(
     (value: number) => {
       sensor.operatingMode = value;
-      setSensor(sensor.cloneSensor());
+      updateSensorValue(sensor);
     },
     [sensor],
   );
@@ -143,89 +170,17 @@ export default function SensorScreen({route, props}): JSX.Element {
       }
 
       // console.log('Getting current data');
-      let data = sensor.getSensorData(afe);
+      sensor.setSensorData(afe, [...sensor.getSensorData(afe), value]);
 
-      console.log('Got ' + data.length + ' data points');
-
-      // Straight-lines don't make good demos -- let's record
-      // the sin(value/2) instead.
-      let newData = [...data, value];
-
-      // We only want to accumulate 25 datapoints, and then
-      // start rolling ...
-      if (newData.length > 25) {
-        newData.shift();
+      let sensorData: Array<number> = [...sensor.getSensorData(afe)];
+      if (afe == 0) {
+        setSensorData1(sensorData.slice(-25));
+      } else if (afe == 1) {
+        setSensorData2(sensorData.slice(-25));
       }
-
-      sensor.setSensorData(afe, newData);
-      setSensor(sensor.cloneSensor());
     },
     [sensor],
   );
-
-  const biasValueOptions = [
-    {label: '0%', value: '0'},
-    {label: '1%', value: '1'},
-    {label: '2%', value: '2'},
-    {label: '4%', value: '3'},
-    {label: '6%', value: '4'},
-    {label: '8%', value: '5'},
-    {label: '10%', value: '6'},
-    {label: '12%', value: '7'},
-    {label: '14%', value: '8'},
-    {label: '16%', value: '9'},
-    {label: '18%', value: '10'},
-    {label: '20%', value: '11'},
-    {label: '22%', value: '12'},
-    {label: '24%', value: '13'},
-    {label: '-1%', value: '-1'},
-    {label: '-2%', value: '-2'},
-    {label: '-4%', value: '-3'},
-    {label: '-6%', value: '-4'},
-    {label: '-8%', value: '-5'},
-    {label: '-10%', value: '-6'},
-    {label: '-12%', value: '-7'},
-    {label: '-14%', value: '-8'},
-    {label: '-16%', value: '-9'},
-    {label: '-18%', value: '-10'},
-    {label: '-20%', value: '-11'},
-    {label: '-22%', value: '-12'},
-    {label: '-24%', value: '-13'},
-  ];
-
-  const intZValueOptions = [
-    {label: '20%', value: '0'},
-    {label: '50%', value: '1'},
-    {label: '67%', value: '2'},
-    {label: 'Bypass', value: '3'},
-  ];
-
-  const rTIAValueOptions = [
-    {label: 'External', value: '0'},
-    {label: '2.75 kOhm', value: '1'},
-    {label: '3.5 kOhm', value: '2'},
-    {label: '7 kOhm', value: '3'},
-    {label: '14 kOhm', value: '4'},
-    {label: '35 kOhm', value: '5'},
-    {label: '120 kOhm', value: '6'},
-    {label: '350 kOhm', value: '7'},
-  ];
-
-  const rLOADValueOptions = [
-    {label: '10 Ohm', value: '0'},
-    {label: '33 Ohm', value: '1'},
-    {label: '50 Ohm', value: '2'},
-    {label: '100 Ohm', value: '3'},
-  ];
-
-  const operatingModeValues = [
-    {label: 'Deep Sleep', value: '0'},
-    {label: '2-Lead', value: '1'},
-    {label: 'Stand By', value: '2'},
-    {label: '3-Lead', value: '3'},
-    {label: 'TIA Off', value: '6'},
-    {label: 'TIA On', value: '7'},
-  ];
 
   /**
    * This method obtains the latest value from the sensor and appends it to the list
@@ -245,6 +200,8 @@ export default function SensorScreen({route, props}): JSX.Element {
     if (sensor.dummySensor) {
       appendDataPoint(0, Math.random() * 50);
       appendDataPoint(1, Math.random() * 50);
+      appendDataPoint(2, new Date().getTime());
+      updateSensorValue(sensor);
     } else {
       // // Attempt to connect
       // console.log('Attempting to read sensor value.');
@@ -322,23 +279,6 @@ export default function SensorScreen({route, props}): JSX.Element {
     // appendDataPoint(0, value);
   }, [appendDataPoint, sensor]);
 
-  /*
-   * emitCurrentValue calls readSensorValue to update the current reading, and displays
-   * the result on the console ... it's had a more useful function in a previous iteration
-   * of this code, but it wasn't working properly and I never fully refactored it out.
-   */
-  let pollValue = useCallback(() => {
-    timeout(readSensorValue(), time.current)
-      .then(value1 => {
-        return value1;
-      })
-      .catch(error => {
-        if (error) {
-          console.log(error);
-        }
-      });
-  }, [sensor, readSensorValue]);
-
   useEffect(() => {
     if (sensor && enabled) {
       if (dataRefreshHandle.current != undefined) {
@@ -346,9 +286,12 @@ export default function SensorScreen({route, props}): JSX.Element {
         dataRefreshHandle.current = undefined;
       }
 
-      dataRefreshHandle.current = setTimeout(pollValue, time.current);
+      dataRefreshHandle.current = setTimeout(
+        async () => await timeout(readSensorValue(), time.current),
+        time.current,
+      );
     }
-  }, [enabled, pollValue, sensor]);
+  }, [enabled, readSensorValue, sensor]);
 
   return (
     <View style={backgroundStyle}>
@@ -367,12 +310,12 @@ export default function SensorScreen({route, props}): JSX.Element {
               datasets: [
                 {
                   key: 'AFE_1',
-                  data: sensor.getSensorData(0),
+                  data: sensorData1,
                   color: (opacity = 1) => `rgba(255, 255, 0, ${opacity})`,
                 },
                 {
                   key: 'AFE_2',
-                  data: sensor.getSensorData(1),
+                  data: sensorData2,
                   color: (opacity = 1) => `rgba(0,0,255, ${opacity})`,
                 },
               ],
@@ -439,12 +382,10 @@ export default function SensorScreen({route, props}): JSX.Element {
               <SegmentedButtons
                 buttons={[
                   {
-                    disabled: enabled,
                     value: '0',
                     label: 'LMP91000_1',
                   },
                   {
-                    disabled: enabled,
                     value: '1',
                     label: 'LMP91000_2',
                   },
