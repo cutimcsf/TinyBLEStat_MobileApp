@@ -174,7 +174,7 @@ export const BLEProvider = ({children}) => {
   useEffect(() => {
     const bluetoothStateSubscription = bleManager.onStateChange(state => {
       setBTState(state);
-      console.log('Bluetooth state: ' + state.toString() + ' ...');
+      console.log('Bluetooth State: ' + state.toString() + ' ...');
     }, true);
 
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -193,21 +193,30 @@ export const BLEProvider = ({children}) => {
       s.dummySensor = true;
     });
 
-    console.log('Starting scanAndConnect!');
-    // Start scanning for BLE devices -- we don't use any filters, so it'll discover everything in range.
-    bleManager.startDeviceScan(
-      null,
-      {scanMode: ScanMode.Balanced},
-      onDiscoverDevice,
-    );
-
     return () => {
       console.error('Unmounting context');
-      bleManager.stopDeviceScan();
       subscription.remove();
       bluetoothStateSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    // Start scanning for BLE devices -- we don't use any filters, so it'll discover everything in range.
+    if (btState === State.PoweredOn) {
+      console.log('Starting device scan');
+      bleManager.startDeviceScan(
+        null,
+        {scanMode: ScanMode.Balanced},
+        onDiscoverDevice,
+      );
+    } else {
+      console.log('Stopping device scan');
+      bleManager.stopDeviceScan();
+    }
+    return () => {
+      bleManager.stopDeviceScan();
+    };
+  }, [btState]);
 
   /*
    * This is the actual object we'll provide as the context to nested elements.
