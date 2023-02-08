@@ -25,6 +25,9 @@ function App(): JSX.Element {
         PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        // PermissionsAndroid.PERMISSIONS.DOWNLOAD_WITHOUT_NOTIFICATION,
         // PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
       ]).then(result => {
         if (result) {

@@ -23,8 +23,9 @@ function NavDrawer(): JSX.Element {
 
         const now = new Date();
         const pathToWrite = `${
-          RNFetchBlob.fs.dirs.DownloadDir
+          RNFetchBlob.fs.dirs.DocumentDir
         }/${s.displayName.replace(/ /g, '-')}_${fmtDate(now)}.csv`;
+        console.log(`Writing File: ${pathToWrite}`);
 
         await RNFetchBlob.fs
           .writeFile(pathToWrite, csvString, 'utf8')
@@ -37,11 +38,11 @@ function NavDrawer(): JSX.Element {
         let shareUrl = `file://${pathToWrite}`;
         console.log(`Sharing URL: ${shareUrl}`);
         await Share.open({
-          title: `${s.displayName} Data Export.csv`,
+          // title: `${s.displayName} Data Export.csv`,
           url: shareUrl,
           type: 'text/csv',
         });
-        await RNFetchBlob.fs.unlink(pathToWrite);
+        //        await RNFetchBlob.fs.unlink(pathToWrite);
       } catch (error: any) {
         console.log(error.message);
       }
