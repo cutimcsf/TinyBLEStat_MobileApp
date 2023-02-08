@@ -179,13 +179,13 @@ class TinyBLEStatSensor {
 
   /**
    * Returns a 7-byte array where:
-   *   Byte 0 = DAC Value
-   *   Byte 1 = LMP91000_1 TIACN register value
-   *   Byte 2 = LMP91000_1 REFCN register value
-   *   Byte 3 = LMP91000_1 MODECN reguster value
-   *   Byte 4 = LMP91000_2 TIACN register value
-   *   Byte 5 = LMP91000_2 REFCN register value
-   *   Byte 6 = LMP91000_2 MODECN reguster value
+   *   Byte 0+1 = DAC Value
+   *   Byte 2 = LMP91000_1 TIACN register value
+   *   Byte 3 = LMP91000_1 REFCN register value
+   *   Byte 4 = LMP91000_1 MODECN reguster value
+   *   Byte 5 = LMP91000_2 TIACN register value
+   *   Byte 6 = LMP91000_2 REFCN register value
+   *   Byte 7 = LMP91000_2 MODECN reguster value
    */
   public encodeConfiguration(): Uint8Array {
     let bytes: Uint8Array = new Uint8Array(8);
