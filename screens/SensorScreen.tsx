@@ -148,8 +148,8 @@ export default function SensorScreen({route}): JSX.Element {
     (Dimensions.get('window').width * (1 - chartWidthPct)) / 2;
 
   let appendDataPoint = useCallback(
-    (timestamp: number, sensor1value: number, sensor2value: number) => {
-      sensor.appendDataPoint(timestamp, sensor1value, sensor2value);
+    (timestamp: number, sensor1value: number, sensor2value: number, x_value: number, y_value: number, z_value: number) => {
+      sensor.appendDataPoint(timestamp, sensor1value, sensor2value, x_value, y_value, z_value);
 
       setChartData1(sensor.getSensorData(0).slice(-10));
       setChartData2(sensor.getSensorData(1).slice(-10));
@@ -180,7 +180,7 @@ export default function SensorScreen({route}): JSX.Element {
       vals = await context.readSensorValuesFromDevice(sensor);
     }
 
-    appendDataPoint(vals[0], vals[1], vals[2]);
+    appendDataPoint(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
     updateSensorValue(sensor);
   }, [appendDataPoint, context, sensor, updateSensorValue]);
 

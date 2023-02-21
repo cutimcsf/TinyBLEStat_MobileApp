@@ -19,9 +19,13 @@ class TinyBLEStatSensor {
   private _shortingFETEnabled: Array<boolean> = [false, false];
   private _operatingMode: Array<number> = [0, 0];
 
+  private _datapointCount: number = 0;
   private _timestamps: Array<number> = [new Date().getTime()];
   private _sensorData1: Array<number> = [0];
   private _sensorData2: Array<number> = [0];
+  private _xdata: Array<number> = [0];
+  private _ydata: Array<number> = [0];
+  private _zdata: Array<number> = [0];
 
   constructor(deviceId: DeviceId, name: string) {
     this.deviceId = deviceId;
@@ -108,6 +112,12 @@ class TinyBLEStatSensor {
       return this._sensorData2;
     } else if (afe == 2) {
       return this._timestamps;
+    } else if (afe == 3) {
+      return this._xdata;
+    } else if (afe == 4) {
+      return this._ydata;
+    } else if (afe == 5) {
+      return this._zdata;
     } else {
       throw new Error('Invalid AFE specifier: ' + afe);
     }
@@ -129,10 +139,26 @@ class TinyBLEStatSensor {
     timestamp: number,
     sensor1value: number,
     sensor2value: number,
+    x_value: number,
+    y_value: number,
+    z_value: number
   ) {
+    if ( this._datapointCount == 0 ) {
+      this._timestamps = [];
+      this._sensorData1 = [];
+      this._sensorData2 = [];
+      this._xdata = [];
+      this._ydata = [];
+      this._zdata = [];
+    }
+
+    this._datapointCount += 1;
     this._timestamps.push(timestamp);
     this._sensorData1.push(sensor1value);
     this._sensorData2.push(sensor2value);
+    this._xdata.push(x_value);
+    this._ydata.push(y_value);
+    this._zdata.push(z_value);
   }
 
   public shallowCopy(): TinyBLEStatSensor {
@@ -231,6 +257,9 @@ class TinyBLEStatSensor {
     let data1 = this.getSensorData(0);
     let data2 = this.getSensorData(1);
     let dates = this.getSensorData(2);
+    let xdata = this.getSensorData(3);
+    let ydata = this.getSensorData(4);
+    let zdata = this.getSensorData(5);
 
     const headerString = [
       'timestamp',
@@ -241,7 +270,7 @@ class TinyBLEStatSensor {
       'z',
     ].join(delim);
     const dataString = [...Array(data1.length).keys()]
-      .map(i => [dates[i], data1[i], data2[i]].join(delim))
+      .map(i => [dates[i], data1[i], data2[i], xdata[i], ydata[i], zdata[i]].join(delim))
       .join('\n');
     const deviceConfiguration = this.encodeConfiguration().join(',');
     const csvString =

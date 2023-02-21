@@ -173,8 +173,12 @@ export const BLEProvider = ({children}) => {
             let now = Date.now();
             let bytes = new Buffer.Buffer(characteristic.value!, 'base64');
             let uint32arr = new Uint32Array(bytes.buffer);
+            let int16arr = new Int16Array(bytes.buffer);
 
-            return [now, uint32arr[0], uint32arr[1]];
+
+            let result = [now, uint32arr[0], uint32arr[1], int16arr[4], int16arr[5], int16arr[6]];
+            console.log(result);
+            return result;
           });
       } catch (error) {
         console.log(
